@@ -250,4 +250,28 @@ public class UserDAO {
         
         return user;
     }
+
+    // 根据手机号查询用户
+    public User getUserByPhone(String phone) {
+        String sql = "SELECT * FROM user WHERE phone = ?";
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                User user = new User();
+                user.setUserId(rs.getInt("user_id"));
+                user.setName(rs.getString("name"));
+                user.setIdentityId(rs.getString("identity_id"));
+                user.setPhone(rs.getString("phone"));
+                user.setRegisterDate(rs.getDate("register_date").toLocalDate());
+                user.setMember(rs.getString("member"));
+                user.setJudge(rs.getString("judge"));
+                return user;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

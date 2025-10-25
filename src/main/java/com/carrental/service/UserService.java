@@ -5,6 +5,9 @@ import com.carrental.dao.UserDAO;
 import com.carrental.entity.Staff;
 import com.carrental.entity.User;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -259,5 +262,43 @@ public class UserService {
         }
         
         return true;
+    }
+    /**
+     * 用户登录
+     * @param phone 用户手机号（当用户名）
+     * @param identityId 身份证号（当密码）
+     * @return 用户对象，登录失败返回 null
+     */
+    public User userLogin(String phone, String identityId) {
+        if (phone == null || phone.trim().isEmpty()) {
+            System.err.println("手机号不能为空");
+            return null;
+        }
+        if (identityId == null || identityId.trim().isEmpty()) {
+            System.err.println("身份证号不能为空");
+            return null;
+        }
+
+        // 调用 DAO 查询用户
+        User user = userDAO.getUserByPhone(phone.trim());
+        if (user == null) {
+            System.err.println("用户不存在");
+            return null;
+        }
+
+        if (!user.getIdentityId().equals(identityId.trim())) {
+            System.err.println("身份证号不匹配");
+            return null;
+        }
+
+        return user; // 登录成功
+    }
+    // 根据手机号查询用户
+    public User getUserByPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            System.err.println("手机号不能为空");
+            return null;
+        }
+        return userDAO.getUserByPhone(phone.trim());
     }
 }

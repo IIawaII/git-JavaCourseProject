@@ -1,6 +1,7 @@
 package com.carrental.gui;
 
 import com.carrental.entity.Staff;
+import com.carrental.entity.User;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +16,8 @@ public class MainFrame extends JFrame {
     private Staff currentStaff;
     private JTabbedPane tabbedPane;
 
+    private  User currentUser;
+
     public MainFrame(Staff staff) {
         this.currentStaff = staff;
         initializeComponents();
@@ -22,6 +25,18 @@ public class MainFrame extends JFrame {
         setupEventHandlers();
         setupFrame();
     }
+    public MainFrame(User user) {
+        this.currentUser = user;
+        initializeComponentsForUser();
+        setupLayoutForUser();
+        setupEventHandlers();
+        setupFrame();
+    }
+    private void initializeComponentsForUser() {
+        tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("车辆信息", new CarManagementPanel()); // 只读或者可租借
+    }
+
 
     /**
      * 初始化组件
@@ -65,6 +80,32 @@ public class MainFrame extends JFrame {
         // 底部状态栏
         JPanel bottomPanel = createBottomPanel();
         add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private void setupLayoutForUser() {
+        setLayout(new BorderLayout());
+
+        // 顶部面板
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JLabel titleLabel = new JLabel("汽车出租管理系统");
+        titleLabel.setFont(new Font("微软雅黑", Font.BOLD, 16));
+        topPanel.add(titleLabel, BorderLayout.WEST);
+
+        // 用户信息
+        JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JLabel userLabel = new JLabel("当前用户: " + currentUser.getName());
+        JButton logoutButton = new JButton("退出登录");
+        logoutButton.addActionListener(e -> {
+            dispose();
+            new LoginFrame().setVisible(true);
+        });
+        userPanel.add(userLabel);
+        userPanel.add(logoutButton);
+        topPanel.add(userPanel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(tabbedPane, BorderLayout.CENTER);
     }
 
     /**
