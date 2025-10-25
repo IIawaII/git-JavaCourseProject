@@ -25,20 +25,21 @@ public class CarDAO {
      * @return 是否添加成功
      */
     public boolean addCar(Car car) {
-        String sql = "INSERT INTO car (license_plate_number, model, color, status, brand, purchase_date, photo, rent, deposit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO car (car_id, license_plate_number, model, color, status, brand, purchase_date, photo, rent, deposit) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, car.getLicensePlateNumber());
-            pstmt.setString(2, car.getModel());
-            pstmt.setString(3, car.getColor());
-            pstmt.setString(4, car.getStatus());
-            pstmt.setString(5, car.getBrand());
-            pstmt.setDate(6, Date.valueOf(car.getPurchaseDate()));
-            pstmt.setBytes(7, car.getPhoto());
-            pstmt.setBigDecimal(8, car.getRent());
-            pstmt.setString(9, car.getDeposit());
+
+            pstmt.setInt(1, car.getCarId());
+            pstmt.setString(2, car.getLicensePlateNumber());
+            pstmt.setString(3, car.getModel());
+            pstmt.setString(4, car.getColor());
+            pstmt.setString(5, car.getStatus());
+            pstmt.setString(6, car.getBrand());
+            pstmt.setDate(7, Date.valueOf(car.getPurchaseDate()));
+            pstmt.setBytes(8, car.getPhoto());
+            pstmt.setBigDecimal(9, car.getRent());
+            pstmt.setString(10, car.getDeposit());
             
             int result = pstmt.executeUpdate();
             return result > 0;
