@@ -1,6 +1,8 @@
 package com.carrental;
 
 import com.carrental.gui.LoginFrame;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 汽车出租管理系统主类
@@ -10,6 +12,7 @@ import com.carrental.gui.LoginFrame;
  * @since 2024
  */
 public class CarRentalSystem {
+    private static final Logger LOGGER = Logger.getLogger(CarRentalSystem.class.getName());
     
     /**
      * 主方法
@@ -20,7 +23,7 @@ public class CarRentalSystem {
         try {
             javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            System.err.println("设置外观失败: " + e.getMessage());
+            LOGGER.log(Level.WARNING, "设置外观失败: " + e.getMessage(), e);
         }
         
         // 在事件分发线程中启动GUI
@@ -32,11 +35,10 @@ public class CarRentalSystem {
                     LoginFrame loginFrame = new LoginFrame();
                     loginFrame.setVisible(true);
                 } catch (Exception e) {
-                    System.err.println("启动系统失败: " + e.getMessage());
-                    e.printStackTrace();
-                    javax.swing.JOptionPane.showMessageDialog(null, 
-                        "系统启动失败: " + e.getMessage(), 
-                        "错误", 
+                    LOGGER.log(Level.SEVERE, "启动系统失败: " + e.getMessage(), e);
+                    javax.swing.JOptionPane.showMessageDialog(null,
+                        "系统启动失败: " + e.getMessage(),
+                        "错误",
                         javax.swing.JOptionPane.ERROR_MESSAGE);
                 }
             }

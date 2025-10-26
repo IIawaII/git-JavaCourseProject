@@ -36,7 +36,6 @@ public class DatePicker extends JPanel {
     private static final Color BLACK_TEXT = Color.BLACK;
     private static final Color WHITE_BG = Color.WHITE;
 
-    private static final Dimension TEXT_FIELD_SIZE = new Dimension(120, 25);
     private static final Dimension CALENDAR_BUTTON_SIZE = new Dimension(30, 25);
     private static final Dimension CONTROL_BUTTON_SIZE = new Dimension(30, 25);
     private static final Dimension POPUP_SIZE = new Dimension(280, 220);
@@ -64,9 +63,10 @@ public class DatePicker extends JPanel {
     private void initComponents() {
         setLayout(new BorderLayout());
 
-        // TextField
-        textField.setEditable(false);
-        textField.setPreferredSize(TEXT_FIELD_SIZE);
+    // TextField
+    // 不强制固定像素宽度，使用列数让布局管理器决定宽度，从而在不同对话框中可以完整显示
+    textField.setEditable(false);
+    textField.setColumns(12);
 
         // Calendar Button
         calendarButton.setPreferredSize(CALENDAR_BUTTON_SIZE);
@@ -253,7 +253,7 @@ public class DatePicker extends JPanel {
                 btn.setForeground(BLACK_TEXT);
             } else if (selectedDate != null && date.equals(selectedDate)) {
                 btn.setBackground(SELECTED_COLOR);
-                btn.setForeground(Color.WHITE);
+                btn.setForeground(BLACK_TEXT); // 修复：选中日期字体为黑色，保证可见
             } else {
                 btn.setBackground(WHITE_BG);
                 btn.setForeground(BLACK_TEXT);
