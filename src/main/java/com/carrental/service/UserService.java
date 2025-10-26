@@ -40,8 +40,22 @@ public class UserService {
             System.err.println("密码不能为空");
             return null;
         }
-        
+
+        // 直接执行登录验证，利用MySQL的锁机制
         return staffDAO.login(name.trim(), password.trim());
+    }
+    /**
+     * 员工登出
+     * @param name 员工姓名
+     * @return 是否登出成功
+     */
+    public boolean logout(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            System.err.println("用户名不能为空");
+            return false;
+        }
+
+        return staffDAO.logout(name.trim());
     }
 
     /**

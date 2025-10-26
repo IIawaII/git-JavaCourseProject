@@ -3,16 +3,20 @@ package com.carrental.gui;
 import com.carrental.entity.Staff;
 import com.carrental.entity.User;
 import com.carrental.service.UserService;
+import com.carrental.util.DatabaseConnection;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.concurrent.*;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 登录界面
  */
 public class LoginFrame extends JFrame {
+    private static final long serialVersionUID = 1L;
+
     private JRadioButton staffRadio;
     private JRadioButton userRadio;
     private ButtonGroup loginTypeGroup;
@@ -23,9 +27,11 @@ public class LoginFrame extends JFrame {
     private JButton cancelButton;
     private JButton registerButton;
     private UserService userService;
+    private final ExecutorService executorService;
 
     public LoginFrame() {
         this.userService = new UserService();
+        this.executorService = Executors.newSingleThreadExecutor();
         initializeComponents();
         setupLayout();
         setupEventHandlers();
@@ -117,6 +123,132 @@ public class LoginFrame extends JFrame {
         registerButton.addActionListener(e -> new UserRegisterDialog(this, userService).setVisible(true));
         passwordField.addActionListener(e -> performLogin());
     }
+    /**
+     * 处理登录事件
+     */
+    private void handleLogin() {
+        if (validateInput()) {
+            performLoginAsync();
+        }
+    }
+    /**
+     * 验证输入数据
+     */
+    private boolean validateInput() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        if (username.isEmpty()) {
+            showMessage("请输入用户名", "提示", JOptionPane.WARNING_MESSAGE);
+            usernameField.requestFocus();
+            return false;
+        }
+
+        if (password.isEmpty()) {
+            showMessage("请输入密码", "提示", JOptionPane.WARNING_MESSAGE);
+            passwordField.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 异步执行登录操作
+     */
+    private void performLoginAsync() {
+        // 禁用登录按钮防止重复点击
+        loginButton.setEnabled(false);
+
+        // 创建一个Future来处理登录任务
+        Future<?> loginFuture = executorService.submit(() -> {
+            try {
+                // 尝试获取数据库连接实例，这会触发数据库连接
+                DatabaseConnection dbConnection = DatabaseConnection.getInstance();
+
+                // 检查数据库连接是否失败
+                if (dbConnection.isConnectionFailed()) {
+                    throw new RuntimeException("数据库连接失败");
+                }
+
+                // 创建UserService
+                this.userService = new UserService();
+
+                String username = usernameField.getText().trim();
+                String password = new String(passwordField.getPassword()).trim();
+
+                // 执行登录操作
+                Staff staff = userService.login(username, password);
+
+                // 在EDT中处理结果
+                SwingUtilities.invokeLater(() -> {
+                    loginButton.setEnabled(true);
+                    if (staff != null) {
+                        showMessage("登录成功！\n欢迎，" + staff.getName() + "！",
+                                "登录成功", JOptionPane.INFORMATION_MESSAGE);
+
+                        // 打开主界面
+                        dispose();
+                        new MainFrame(staff).setVisible(true);
+                    } else {
+                        // 检查是否是重复登录或其他错误
+                        try {
+                            // 由于UserService中已经处理了重复登录检查，这里显示相应的错误信息
+                            showMessage("登录失败！可能原因：\n1. 用户名或密码错误\n2. 该用户已登录，无法重复登录",
+                                    "登录失败", JOptionPane.ERROR_MESSAGE);
+                        } catch (Exception e) {
+                            showMessage("登录失败！可能原因：\n1. 用户名或密码错误\n2. 该用户已登录，无法重复登录",
+                                    "登录失败", JOptionPane.ERROR_MESSAGE);
+                        }
+                        passwordField.setText("");
+                        passwordField.requestFocus();
+                    }
+                });
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    loginButton.setEnabled(true);
+                    // 检查是否是数据库连接错误
+                    if (e instanceof RuntimeException &&
+                            e.getMessage().contains("数据库连接失败") ||
+                            e.getMessage().contains("连接超时")) {
+                        JOptionPane.showMessageDialog(this,
+                                "数据库连接出错",
+                                "错误",
+                                JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        showMessage("登录过程中发生错误：" + e.getMessage(),
+                                "错误", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            }
+        });
+
+        // 启动一个定时器来检查是否超时
+        Timer timeoutTimer = new Timer();
+        timeoutTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (!loginFuture.isDone()) {
+                    // 如果登录任务还在执行，取消它并显示错误
+                    loginFuture.cancel(true);
+                    SwingUtilities.invokeLater(() -> {
+                        loginButton.setEnabled(true);
+                        JOptionPane.showMessageDialog(LoginFrame.this,
+                                "数据库连接超时",
+                                "错误",
+                                JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+            }
+        }, 5000); // 5秒超时
+    }
+    /**
+     * 显示消息对话框
+     */
+    private void showMessage(String message, String title, int messageType) {
+        JOptionPane.showMessageDialog(this, message, title, messageType);
+    }
+
 
     private void setupFrame() {
         setTitle("汽车出租管理系统 - 登录");
@@ -124,6 +256,14 @@ public class LoginFrame extends JFrame {
         setResizable(false);
         setSize(400, 300);
         setLocationRelativeTo(null);
+    }
+    @Override
+    public void dispose() {
+        super.dispose();
+        // 关闭线程池
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
 
     private void performLogin() {

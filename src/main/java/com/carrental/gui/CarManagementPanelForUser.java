@@ -17,7 +17,7 @@ import java.util.List;
  * 车辆管理面板
  * 提供车辆的增删改查功能
  */
-public class CarManagementPanel extends JPanel {
+public class CarManagementPanelForUser extends JPanel {
     private CarService carService;
     private JTable carTable;
     private DefaultTableModel tableModel;
@@ -25,10 +25,8 @@ public class CarManagementPanel extends JPanel {
     private JComboBox<String> statusComboBox;
     private JComboBox<String> brandComboBox;
     private String userPermit;
-    private User currentUser;
-    private Staff currentStaff;
 
-    public CarManagementPanel() {
+    public CarManagementPanelForUser() {
         this.carService = new CarService();
         this.userPermit = userPermit;
         initializeComponents();
@@ -54,7 +52,7 @@ public class CarManagementPanel extends JPanel {
         carTable.setFont(new Font("微软雅黑", Font.PLAIN, 12));
         carTable.setRowHeight(25);
         carTable.getTableHeader().setFont(new Font("微软雅黑", Font.BOLD, 12));
-        
+
         // 设置列宽
         carTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         carTable.getColumnModel().getColumn(1).setPreferredWidth(120);
@@ -69,10 +67,10 @@ public class CarManagementPanel extends JPanel {
         // 创建搜索组件
         searchField = new JTextField(15);
         searchField.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        
+
         statusComboBox = new JComboBox<>(new String[]{"全部", "空闲", "已借出", "维修中"});
         statusComboBox.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        
+
         brandComboBox = new JComboBox<>(new String[]{"全部", "本田", "奔驰", "劳斯莱斯", "宝马", "奥迪", "丰田"});
         brandComboBox.setFont(new Font("微软雅黑", Font.PLAIN, 12));
     }
@@ -82,16 +80,16 @@ public class CarManagementPanel extends JPanel {
      */
     private void setupLayout() {
         setLayout(new BorderLayout());
-        
+
         // 顶部搜索面板
         JPanel searchPanel = createSearchPanel();
         add(searchPanel, BorderLayout.NORTH);
-        
+
         // 中间表格面板
         JScrollPane scrollPane = new JScrollPane(carTable);
         scrollPane.setBorder(BorderFactory.createTitledBorder("车辆列表"));
         add(scrollPane, BorderLayout.CENTER);
-        
+
         // 底部按钮面板
         JPanel buttonPanel = createButtonPanel();
         add(buttonPanel, BorderLayout.SOUTH);
@@ -103,16 +101,16 @@ public class CarManagementPanel extends JPanel {
     private JPanel createSearchPanel() {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         searchPanel.add(new JLabel("搜索:"));
         searchPanel.add(searchField);
-        
+
         searchPanel.add(new JLabel("状态:"));
         searchPanel.add(statusComboBox);
-        
+
         searchPanel.add(new JLabel("品牌:"));
         searchPanel.add(brandComboBox);
-        
+
         JButton searchButton = new JButton("搜索");
         searchButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
         searchButton.addActionListener(new ActionListener() {
@@ -122,7 +120,7 @@ public class CarManagementPanel extends JPanel {
             }
         });
         searchPanel.add(searchButton);
-        
+
         JButton refreshButton = new JButton("刷新");
         refreshButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
         refreshButton.addActionListener(new ActionListener() {
@@ -132,7 +130,7 @@ public class CarManagementPanel extends JPanel {
             }
         });
         searchPanel.add(refreshButton);
-        
+
         return searchPanel;
     }
 
@@ -142,37 +140,7 @@ public class CarManagementPanel extends JPanel {
     private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JButton addButton = new JButton("添加车辆");
-        addButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showAddCarDialog();
-            }
-        });
-        buttonPanel.add(addButton);
-        
-        JButton editButton = new JButton("修改车辆");
-        editButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        editButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showEditCarDialog();
-            }
-        });
-        buttonPanel.add(editButton);
-        
-        JButton deleteButton = new JButton("删除车辆");
-        deleteButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteCar();
-            }
-        });
-        buttonPanel.add(deleteButton);
-        
+
         JButton viewButton = new JButton("查看详情");
         viewButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
         viewButton.addActionListener(new ActionListener() {
@@ -182,7 +150,7 @@ public class CarManagementPanel extends JPanel {
             }
         });
         buttonPanel.add(viewButton);
-        
+
         return buttonPanel;
     }
 
@@ -207,20 +175,20 @@ public class CarManagementPanel extends JPanel {
     private void loadCarData() {
         tableModel.setRowCount(0);
         List<Car> cars = carService.getAllCars();
-        
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
+
         for (Car car : cars) {
             Object[] row = {
-                car.getCarId(),
-                car.getLicensePlateNumber(),
-                car.getBrand(),
-                car.getModel(),
-                car.getColor(),
-                car.getStatus(),
-                car.getRent(),
-                car.getDeposit(),
-                car.getPurchaseDate() != null ? car.getPurchaseDate().format(formatter) : ""
+                    car.getCarId(),
+                    car.getLicensePlateNumber(),
+                    car.getBrand(),
+                    car.getModel(),
+                    car.getColor(),
+                    car.getStatus(),
+                    car.getRent(),
+                    car.getDeposit(),
+                    car.getPurchaseDate() != null ? car.getPurchaseDate().format(formatter) : ""
             };
             tableModel.addRow(row);
         }
@@ -233,87 +201,36 @@ public class CarManagementPanel extends JPanel {
         String searchText = searchField.getText().trim();
         String status = (String) statusComboBox.getSelectedItem();
         String brand = (String) brandComboBox.getSelectedItem();
-        
+
         List<Car> cars = carService.getAllCars();
-        
+
         // 过滤结果
         cars = cars.stream()
-                .filter(car -> searchText.isEmpty() || 
-                    car.getLicensePlateNumber().contains(searchText) ||
-                    car.getBrand().contains(searchText) ||
-                    car.getModel().contains(searchText))
+                .filter(car -> searchText.isEmpty() ||
+                        car.getLicensePlateNumber().contains(searchText) ||
+                        car.getBrand().contains(searchText) ||
+                        car.getModel().contains(searchText))
                 .filter(car -> status.equals("全部") || car.getStatus().equals(status))
                 .filter(car -> brand.equals("全部") || car.getBrand().equals(brand))
                 .collect(java.util.stream.Collectors.toList());
-        
+
         // 更新表格
         tableModel.setRowCount(0);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
+
         for (Car car : cars) {
             Object[] row = {
-                car.getCarId(),
-                car.getLicensePlateNumber(),
-                car.getBrand(),
-                car.getModel(),
-                car.getColor(),
-                car.getStatus(),
-                car.getRent(),
-                car.getDeposit(),
-                car.getPurchaseDate() != null ? car.getPurchaseDate().format(formatter) : ""
+                    car.getCarId(),
+                    car.getLicensePlateNumber(),
+                    car.getBrand(),
+                    car.getModel(),
+                    car.getColor(),
+                    car.getStatus(),
+                    car.getRent(),
+                    car.getDeposit(),
+                    car.getPurchaseDate() != null ? car.getPurchaseDate().format(formatter) : ""
             };
             tableModel.addRow(row);
-        }
-    }
-
-    /**
-     * 显示添加车辆对话框
-     */
-    private void showAddCarDialog() {
-        new CarDialog(this, null).setVisible(true);
-    }
-
-    /**
-     * 显示修改车辆对话框
-     */
-    private void showEditCarDialog() {
-        int selectedRow = carTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "请选择要修改的车辆", "提示", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        int carId = (Integer) tableModel.getValueAt(selectedRow, 0);
-        Car car = carService.getCarById(carId);
-        if (car != null) {
-            new CarDialog(this, car).setVisible(true);
-        }
-    }
-
-    /**
-     * 删除车辆
-     */
-    private void deleteCar() {
-        int selectedRow = carTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "请选择要删除的车辆", "提示", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        int carId = (Integer) tableModel.getValueAt(selectedRow, 0);
-        String licensePlate = (String) tableModel.getValueAt(selectedRow, 1);
-        
-        int result = JOptionPane.showConfirmDialog(this, 
-            "确定要删除车辆 " + licensePlate + " 吗？", 
-            "确认删除", JOptionPane.YES_NO_OPTION);
-        
-        if (result == JOptionPane.YES_OPTION) {
-            if (carService.deleteCar(carId)) {
-                JOptionPane.showMessageDialog(this, "删除成功", "提示", JOptionPane.INFORMATION_MESSAGE);
-                loadCarData();
-            } else {
-                JOptionPane.showMessageDialog(this, "删除失败", "错误", JOptionPane.ERROR_MESSAGE);
-            }
         }
     }
 
@@ -326,7 +243,7 @@ public class CarManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要查看的车辆", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         int carId = (Integer) tableModel.getValueAt(selectedRow, 0);
         Car car = carService.getCarById(carId);
         if (car != null) {
