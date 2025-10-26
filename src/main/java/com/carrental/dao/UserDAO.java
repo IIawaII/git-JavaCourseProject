@@ -250,20 +250,27 @@ public class UserDAO {
 
     // 根据手机号查询用户
     public User getUserByPhone(String phone) {
-        String sql = "SELECT * FROM user WHERE phone = ?";
+                /*
+        这个方法用于用户登陆时判断用户手机号和身份证是否匹配
+        要name是因为登陆后在右上角会显示用户名字
+         */
+        String sql = "SELECT name, identity_id, phone FROM user WHERE phone = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, phone);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 User user = new User();
-                user.setUserId(rs.getInt("user_id"));
                 user.setName(rs.getString("name"));
                 user.setIdentityId(rs.getString("identity_id"));
                 user.setPhone(rs.getString("phone"));
-                user.setRegisterDate(rs.getDate("register_date").toLocalDate());
-                user.setMember(rs.getString("member"));
-                user.setJudge(rs.getString("judge"));
+                if (user.getIdentityId() == null || user.getIdentityId().isEmpty()) {
+                    // 如果身份证号为空，认为是普通用户
+                    user.setPermit("employee");
+                } else {
+                    // 如果身份证号不为空，认为是员工
+                    user.setPermit("customer");
+                }
                 return user;
             }
         } catch (SQLException e) {

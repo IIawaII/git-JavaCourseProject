@@ -16,6 +16,7 @@ public class MainFrame extends JFrame {
     private Staff currentStaff;
     private JTabbedPane tabbedPane;
 
+
     private  User currentUser;
 
     public MainFrame(Staff staff) {
@@ -31,6 +32,7 @@ public class MainFrame extends JFrame {
         setupLayoutForUser();
         setupEventHandlers();
         setupFrame();
+
     }
     private void initializeComponentsForUser() {
         tabbedPane = new JTabbedPane();
