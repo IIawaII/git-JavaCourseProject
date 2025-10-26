@@ -1,6 +1,7 @@
 package com.carrental.gui;
 
 import com.carrental.entity.Staff;
+import com.carrental.service.UserService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,9 +15,11 @@ import java.awt.event.ActionListener;
 public class MainFrame extends JFrame {
     private Staff currentStaff;
     private JTabbedPane tabbedPane;
+    private UserService userService;
 
     public MainFrame(Staff staff) {
         this.currentStaff = staff;
+        this.userService = new UserService();
         initializeComponents();
         setupLayout();
         setupEventHandlers();
@@ -34,17 +37,21 @@ public class MainFrame extends JFrame {
             // 员工权限及以上
             tabbedPane.addTab("车辆管理", new CarManagementPanel());
             tabbedPane.addTab("租车管理", new RentManagementPanel());
+            tabbedPane.addTab("损坏管理", new DamageManagementPanel());
+            tabbedPane.addTab("维修管理", new MaintainManagementPanel());
         }
         
         if (currentStaff.getRole() >= 6) {
             // 经理权限及以上
             tabbedPane.addTab("用户管理", new UserManagementPanel());
             tabbedPane.addTab("员工管理", new StaffManagementPanel());
+            tabbedPane.addTab("违章罚款管理", new TrafficFineManagementPanel());
         }
         
         if (currentStaff.getRole() >= 9) {
             // 董事长权限
             tabbedPane.addTab("财务报表", new FinancialReportPanel());
+            tabbedPane.addTab("数据统计", new StatisticsPanel());
             tabbedPane.addTab("系统设置", new SystemSettingsPanel());
         }
     }
@@ -94,8 +101,14 @@ public class MainFrame extends JFrame {
                 int result = JOptionPane.showConfirmDialog(MainFrame.this, 
                     "确定要退出登录吗？", "确认退出", JOptionPane.YES_NO_OPTION);
                 if (result == JOptionPane.YES_OPTION) {
-                    dispose();
-                    new LoginFrame().setVisible(true);
+                    // 执行登出操作
+                    if (userService.logout(currentStaff.getName())) {
+                        dispose();
+                        new LoginFrame().setVisible(true);
+                    } else {
+                        JOptionPane.showMessageDialog(MainFrame.this, 
+                            "登出失败，请重试", "错误", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });

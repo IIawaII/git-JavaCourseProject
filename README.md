@@ -43,9 +43,32 @@
 - 职位管理
 
 ### 6. 财务报表
-- 收益统计
-- 租车数据分析
-- 财务报表生成
+- 利润分析（基于数据库视图）
+- 未交罚款统计
+- 员工管理车辆数量统计
+- 已维修车辆统计
+
+### 7. 损坏管理
+- 车辆损坏记录管理
+- 损坏状态跟踪
+- 损坏信息查询和筛选
+
+### 8. 维修管理
+- 车辆维修记录管理
+- 维修费用统计
+- 维修进度跟踪
+
+### 9. 违章罚款管理
+- 违章罚款记录管理
+- 罚款状态管理
+- 罚款统计分析
+
+### 10. 数据统计和分析
+- 车辆统计（按状态、品牌）
+- 用户统计（按会员状态、信誉度）
+- 员工统计（按职位、权限等级）
+- 租车统计（收入、平均金额）
+- 财务统计（维修费用、罚款统计）
 
 ## 数据库设计
 
@@ -69,12 +92,18 @@ src/main/java/com/carrental/
 │   ├── Car.java                  # 车辆实体
 │   ├── User.java                 # 用户实体
 │   ├── Staff.java                # 员工实体
-│   └── RentInformation.java      # 租车信息实体
+│   ├── RentInformation.java      # 租车信息实体
+│   ├── DamageInformation.java    # 损坏信息实体
+│   ├── MaintainInformation.java  # 维修信息实体
+│   └── TrafficFine.java          # 违章罚款实体
 ├── dao/                          # 数据访问层
 │   ├── CarDAO.java               # 车辆数据访问
 │   ├── UserDAO.java              # 用户数据访问
 │   ├── StaffDAO.java             # 员工数据访问
-│   └── RentInformationDAO.java   # 租车信息数据访问
+│   ├── RentInformationDAO.java   # 租车信息数据访问
+│   ├── DamageInformationDAO.java # 损坏信息数据访问
+│   ├── MaintainInformationDAO.java # 维修信息数据访问
+│   └── TrafficFineDAO.java       # 违章罚款数据访问
 ├── service/                      # 业务逻辑层
 │   ├── CarService.java           # 车辆业务逻辑
 │   ├── UserService.java          # 用户业务逻辑
@@ -84,10 +113,18 @@ src/main/java/com/carrental/
 │   ├── MainFrame.java            # 主界面
 │   ├── CarManagementPanel.java   # 车辆管理面板
 │   ├── RentManagementPanel.java  # 租车管理面板
+│   ├── DamageManagementPanel.java # 损坏管理面板
+│   ├── MaintainManagementPanel.java # 维修管理面板
+│   ├── TrafficFineManagementPanel.java # 违章罚款管理面板
+│   ├── FinancialReportPanel.java # 财务报表面板
+│   ├── StatisticsPanel.java      # 数据统计面板
 │   ├── CarDialog.java            # 车辆信息对话框
 │   ├── RentCarDialog.java        # 租车对话框
 │   ├── ReturnCarDialog.java      # 还车对话框
 │   ├── ContractDialog.java       # 合同生成对话框
+│   ├── DamageDialog.java          # 损坏信息对话框
+│   ├── MaintainDialog.java       # 维修信息对话框
+│   ├── TrafficFineDialog.java    # 违章罚款对话框
 │   └── ...                       # 其他界面组件
 └── util/                         # 工具类包
     └── DatabaseConnection.java    # 数据库连接工具
