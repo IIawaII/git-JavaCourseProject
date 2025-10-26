@@ -39,8 +39,8 @@ public class LoginFrame extends JFrame {
         loginTypeGroup.add(staffRadio);
         loginTypeGroup.add(userRadio);
 
-        usernameField = new JTextField(15);
-        passwordField = new JPasswordField(15);
+        usernameField = new JTextField(25);
+        passwordField = new JPasswordField(25);
 
         loginButton = new JButton("登录");
         cancelButton = new JButton("取消");
@@ -78,16 +78,24 @@ public class LoginFrame extends JFrame {
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
         mainPanel.add(typePanel, gbc);
 
-        // 用户名
+        // 用户名/手机号
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE; // 不填充
         mainPanel.add(new JLabel("用户名/手机号:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1.0; // 让输入框占用剩余空间
+        gbc.fill = GridBagConstraints.HORIZONTAL; // 让输入框横向填充
         mainPanel.add(usernameField, gbc);
 
-        // 密码
+        // 密码/身份证
         gbc.gridx = 0; gbc.gridy = 3; gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE; // 不填充
         mainPanel.add(new JLabel("密码/身份证:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL; // 让输入框横向填充
         mainPanel.add(passwordField, gbc);
 
         // 按钮

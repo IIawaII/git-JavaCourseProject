@@ -24,21 +24,18 @@ public class UserDAO {
      * @return 是否添加成功
      */
     public boolean addUser(User user) {
-        String sql = "INSERT INTO user (name, identity_id, phone, register_date, member, judge) VALUES (?, ?, ?, ?, ?, ?)";
-        
+        String sql = "INSERT INTO user (name, identity_id, phone) VALUES (?, ?, ?)";
+
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, user.getName());
             pstmt.setString(2, user.getIdentityId());
             pstmt.setString(3, user.getPhone());
-            pstmt.setDate(4, Date.valueOf(user.getRegisterDate()));
-            pstmt.setString(5, user.getMember());
-            pstmt.setString(6, user.getJudge());
-            
+
             int result = pstmt.executeUpdate();
             return result > 0;
-            
+
         } catch (SQLException e) {
             System.err.println("添加用户失败: " + e.getMessage());
             e.printStackTrace();
