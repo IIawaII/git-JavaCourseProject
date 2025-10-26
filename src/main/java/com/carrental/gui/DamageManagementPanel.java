@@ -64,7 +64,7 @@ public class DamageManagementPanel extends JPanel {
         stateFilterCombo = new JComboBox<>(new String[]{"全部", "已维修", "未维修"});
         carFilterCombo = new JComboBox<>();
         carFilterCombo.addItem("全部车辆");
-
+        
         // 加载车辆列表
         loadCarList();
     }
@@ -124,11 +124,11 @@ public class DamageManagementPanel extends JPanel {
      */
     private void loadData() {
         tableModel.setRowCount(0);
-
+        
         List<DamageInformation> damageList;
         String selectedState = (String) stateFilterCombo.getSelectedItem();
         String selectedCar = (String) carFilterCombo.getSelectedItem();
-
+        
         if ("全部".equals(selectedState) && "全部车辆".equals(selectedCar)) {
             damageList = damageDAO.getAllDamageInformation();
         } else if (!"全部".equals(selectedState) && "全部车辆".equals(selectedCar)) {
@@ -144,18 +144,18 @@ public class DamageManagementPanel extends JPanel {
                     .filter(d -> "全部车辆".equals(selectedCar) || extractCarIdFromCombo(selectedCar) == d.getCarId())
                     .collect(java.util.stream.Collectors.toList());
         }
-
+        
         for (DamageInformation damage : damageList) {
             Car car = carDAO.getCarById(damage.getCarId());
             String licensePlate = car != null ? car.getLicensePlateNumber() : "未知";
-
+            
             Object[] row = {
-                    damage.getDamageId(),
-                    damage.getCarId(),
-                    licensePlate,
-                    damage.getDamageDate(),
-                    damage.getDamageDescribe(),
-                    damage.getDamageState()
+                damage.getDamageId(),
+                damage.getCarId(),
+                licensePlate,
+                damage.getDamageDate(),
+                damage.getDamageDescribe(),
+                damage.getDamageState()
             };
             tableModel.addRow(row);
         }
@@ -193,10 +193,10 @@ public class DamageManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要修改的损坏记录", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         int damageId = (Integer) tableModel.getValueAt(selectedRow, 0);
         DamageInformation damage = damageDAO.getDamageInformationById(damageId);
-
+        
         if (damage != null) {
             DamageDialog dialog = new DamageDialog(damage, carDAO.getAllCars());
             dialog.setVisible(true);
@@ -215,14 +215,14 @@ public class DamageManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要删除的损坏记录", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         int damageId = (Integer) tableModel.getValueAt(selectedRow, 0);
         String damageDescribe = (String) tableModel.getValueAt(selectedRow, 4);
-
-        int result = JOptionPane.showConfirmDialog(this,
-                "确定要删除损坏记录吗？\n损坏描述: " + damageDescribe,
-                "确认删除", JOptionPane.YES_NO_OPTION);
-
+        
+        int result = JOptionPane.showConfirmDialog(this, 
+            "确定要删除损坏记录吗？\n损坏描述: " + damageDescribe, 
+            "确认删除", JOptionPane.YES_NO_OPTION);
+        
         if (result == JOptionPane.YES_OPTION) {
             if (damageDAO.deleteDamageInformation(damageId)) {
                 JOptionPane.showMessageDialog(this, "删除成功", "成功", JOptionPane.INFORMATION_MESSAGE);

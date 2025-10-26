@@ -63,7 +63,7 @@ public class MaintainManagementPanel extends JPanel {
         // 创建筛选组件
         carFilterCombo = new JComboBox<>();
         carFilterCombo.addItem("全部车辆");
-
+        
         // 加载车辆列表
         loadCarList();
     }
@@ -120,30 +120,30 @@ public class MaintainManagementPanel extends JPanel {
      */
     private void loadData() {
         tableModel.setRowCount(0);
-
+        
         List<MaintainInformation> maintainList;
         String selectedCar = (String) carFilterCombo.getSelectedItem();
-
+        
         if ("全部车辆".equals(selectedCar)) {
             maintainList = maintainDAO.getAllMaintainInformation();
         } else {
             int carId = extractCarIdFromCombo(selectedCar);
             maintainList = maintainDAO.getMaintainInformationByCarId(carId);
         }
-
+        
         for (MaintainInformation maintain : maintainList) {
             Car car = carDAO.getCarById(maintain.getCarId());
             String licensePlate = car != null ? car.getLicensePlateNumber() : "未知";
-
+            
             Object[] row = {
-                    maintain.getMaintainId(),
-                    maintain.getCarId(),
-                    licensePlate,
-                    maintain.getMaintainDate(),
-                    maintain.getMaintainDescribe(),
-                    maintain.getMaintainBeginDate(),
-                    maintain.getMaintainFinishDate(),
-                    maintain.getMaintainCost()
+                maintain.getMaintainId(),
+                maintain.getCarId(),
+                licensePlate,
+                maintain.getMaintainDate(),
+                maintain.getMaintainDescribe(),
+                maintain.getMaintainBeginDate(),
+                maintain.getMaintainFinishDate(),
+                maintain.getMaintainCost()
             };
             tableModel.addRow(row);
         }
@@ -181,10 +181,10 @@ public class MaintainManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要修改的维修记录", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         int maintainId = (Integer) tableModel.getValueAt(selectedRow, 0);
         MaintainInformation maintain = maintainDAO.getMaintainInformationById(maintainId);
-
+        
         if (maintain != null) {
             MaintainDialog dialog = new MaintainDialog(maintain, carDAO.getAllCars(), maintainId);
             dialog.setVisible(true);
@@ -203,14 +203,14 @@ public class MaintainManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要删除的维修记录", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         int maintainId = (Integer) tableModel.getValueAt(selectedRow, 0);
         String maintainDescribe = (String) tableModel.getValueAt(selectedRow, 4);
-
-        int result = JOptionPane.showConfirmDialog(this,
-                "确定要删除维修记录吗？\n维修描述: " + maintainDescribe,
-                "确认删除", JOptionPane.YES_NO_OPTION);
-
+        
+        int result = JOptionPane.showConfirmDialog(this, 
+            "确定要删除维修记录吗？\n维修描述: " + maintainDescribe, 
+            "确认删除", JOptionPane.YES_NO_OPTION);
+        
         if (result == JOptionPane.YES_OPTION) {
             if (maintainDAO.deleteMaintainInformation(maintainId)) {
                 JOptionPane.showMessageDialog(this, "删除成功", "成功", JOptionPane.INFORMATION_MESSAGE);

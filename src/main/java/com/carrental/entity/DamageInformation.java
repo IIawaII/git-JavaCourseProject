@@ -18,8 +18,8 @@ public class DamageInformation {
     public DamageInformation() {}
 
     // 带参构造函数
-    public DamageInformation(int damageId, int carId, byte[] photo, LocalDate damageDate,
-                             String damageDescribe, String damageState) {
+    public DamageInformation(int damageId, int carId, byte[] photo, LocalDate damageDate, 
+                           String damageDescribe, String damageState) {
         this.damageId = damageId;
         this.carId = carId;
         this.photo = photo;

@@ -35,7 +35,7 @@ public class UserService {
             System.err.println("用户名不能为空");
             return null;
         }
-        
+
         if (password == null || password.trim().isEmpty()) {
             System.err.println("密码不能为空");
             return null;
@@ -67,7 +67,7 @@ public class UserService {
         if (!validateStaff(staff)) {
             return false;
         }
-        
+
         return staffDAO.addStaff(staff);
     }
 
@@ -89,7 +89,7 @@ public class UserService {
         if (!validateStaff(staff)) {
             return false;
         }
-        
+
         return staffDAO.updateStaff(staff);
     }
 
@@ -128,14 +128,14 @@ public class UserService {
         if (!validateUser(user)) {
             return false;
         }
-        
+
         // 检查身份证号是否已存在
         User existingUser = userDAO.getUserByIdentityId(user.getIdentityId());
         if (existingUser != null) {
             System.err.println("身份证号已存在");
             return false;
         }
-        
+
         return userDAO.addUser(user);
     }
 
@@ -157,7 +157,7 @@ public class UserService {
         if (!validateUser(user)) {
             return false;
         }
-        
+
         return userDAO.updateUser(user);
     }
 
@@ -215,32 +215,32 @@ public class UserService {
             System.err.println("员工姓名不能为空");
             return false;
         }
-        
+
         if (staff.getPhone() == null || staff.getPhone().trim().isEmpty()) {
             System.err.println("联系电话不能为空");
             return false;
         }
-        
+
         if (staff.getPosition() == null || staff.getPosition().trim().isEmpty()) {
             System.err.println("职位不能为空");
             return false;
         }
-        
+
         if (staff.getPassword() == null || staff.getPassword().trim().isEmpty()) {
             System.err.println("密码不能为空");
             return false;
         }
-        
+
         if (staff.getEntryDate() == null || staff.getEntryDate().isAfter(LocalDate.now())) {
             System.err.println("入职日期不能为空或晚于当前日期");
             return false;
         }
-        
+
         if (staff.getRole() < 1 || staff.getRole() > 9) {
             System.err.println("权限等级必须在1-9之间");
             return false;
         }
-        
+
         return true;
     }
 
@@ -254,27 +254,27 @@ public class UserService {
             System.err.println("用户姓名不能为空");
             return false;
         }
-        
+
         if (user.getIdentityId() == null || user.getIdentityId().trim().isEmpty()) {
             System.err.println("身份证号不能为空");
             return false;
         }
-        
+
         if (user.getIdentityId().length() != 18) {
             System.err.println("身份证号必须为18位");
             return false;
         }
-        
+
         if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
             System.err.println("联系电话不能为空");
             return false;
         }
-        
+
         if (user.getRegisterDate() == null || user.getRegisterDate().isAfter(LocalDate.now())) {
             System.err.println("注册日期不能为空或晚于当前日期");
             return false;
         }
-        
+
         return true;
     }
     /**

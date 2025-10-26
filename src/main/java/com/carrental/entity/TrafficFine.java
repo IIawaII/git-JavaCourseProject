@@ -20,8 +20,8 @@ public class TrafficFine {
     public TrafficFine() {}
 
     // 带参构造函数
-    public TrafficFine(int fineId, int carId, int userId, LocalDate violationDate,
-                       String offendingLocation, BigDecimal fine, String fineState) {
+    public TrafficFine(int fineId, int carId, int userId, LocalDate violationDate, 
+                      String offendingLocation, BigDecimal fine, String fineState) {
         this.fineId = fineId;
         this.carId = carId;
         this.userId = userId;

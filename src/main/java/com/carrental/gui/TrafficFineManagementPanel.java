@@ -72,7 +72,7 @@ public class TrafficFineManagementPanel extends JPanel {
         carFilterCombo.addItem("全部车辆");
         userFilterCombo = new JComboBox<>();
         userFilterCombo.addItem("全部用户");
-
+        
         // 加载车辆和用户列表
         loadCarList();
         loadUserList();
@@ -146,12 +146,12 @@ public class TrafficFineManagementPanel extends JPanel {
      */
     private void loadData() {
         tableModel.setRowCount(0);
-
+        
         List<TrafficFine> fineList;
         String selectedState = (String) stateFilterCombo.getSelectedItem();
         String selectedCar = (String) carFilterCombo.getSelectedItem();
         String selectedUser = (String) userFilterCombo.getSelectedItem();
-
+        
         if ("全部".equals(selectedState) && "全部车辆".equals(selectedCar) && "全部用户".equals(selectedUser)) {
             fineList = trafficFineDAO.getAllTrafficFine();
         } else {
@@ -163,23 +163,23 @@ public class TrafficFineManagementPanel extends JPanel {
                     .filter(f -> "全部用户".equals(selectedUser) || extractUserIdFromCombo(selectedUser) == f.getUserId())
                     .collect(java.util.stream.Collectors.toList());
         }
-
+        
         for (TrafficFine fine : fineList) {
             Car car = carDAO.getCarById(fine.getCarId());
             User user = userDAO.getUserById(fine.getUserId());
             String licensePlate = car != null ? car.getLicensePlateNumber() : "未知";
             String userName = user != null ? user.getName() : "未知";
-
+            
             Object[] row = {
-                    fine.getFineId(),
-                    fine.getCarId(),
-                    licensePlate,
-                    fine.getUserId(),
-                    userName,
-                    fine.getViolationDate(),
-                    fine.getOffendingLocation(),
-                    fine.getFine(),
-                    fine.getFineState()
+                fine.getFineId(),
+                fine.getCarId(),
+                licensePlate,
+                fine.getUserId(),
+                userName,
+                fine.getViolationDate(),
+                fine.getOffendingLocation(),
+                fine.getFine(),
+                fine.getFineState()
             };
             tableModel.addRow(row);
         }
@@ -229,10 +229,10 @@ public class TrafficFineManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要修改的罚款记录", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         int fineId = (Integer) tableModel.getValueAt(selectedRow, 0);
         TrafficFine fine = trafficFineDAO.getTrafficFineById(fineId);
-
+        
         if (fine != null) {
             TrafficFineDialog dialog = new TrafficFineDialog(fine, carDAO.getAllCars(), userDAO.getAllUsers());
             dialog.setVisible(true);
@@ -251,14 +251,14 @@ public class TrafficFineManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请选择要删除的罚款记录", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         int fineId = (Integer) tableModel.getValueAt(selectedRow, 0);
         String offendingLocation = (String) tableModel.getValueAt(selectedRow, 6);
-
-        int result = JOptionPane.showConfirmDialog(this,
-                "确定要删除罚款记录吗？\n违规地点: " + offendingLocation,
-                "确认删除", JOptionPane.YES_NO_OPTION);
-
+        
+        int result = JOptionPane.showConfirmDialog(this, 
+            "确定要删除罚款记录吗？\n违规地点: " + offendingLocation, 
+            "确认删除", JOptionPane.YES_NO_OPTION);
+        
         if (result == JOptionPane.YES_OPTION) {
             if (trafficFineDAO.deleteTrafficFine(fineId)) {
                 JOptionPane.showMessageDialog(this, "删除成功", "成功", JOptionPane.INFORMATION_MESSAGE);

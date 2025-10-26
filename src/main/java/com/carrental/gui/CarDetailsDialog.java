@@ -17,7 +17,7 @@ public class CarDetailsDialog extends JDialog {
     private static final Font VALUE_FONT = new Font("微软雅黑", Font.PLAIN, 12);
     private static final Color RENT_COLOR = Color.RED;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy年MM月dd日");
-
+    
     private static final Map<String, Color> STATUS_COLOR_MAP = new HashMap<>();
     static {
         STATUS_COLOR_MAP.put("空闲", Color.GREEN);
@@ -30,7 +30,7 @@ public class CarDetailsDialog extends JDialog {
     public CarDetailsDialog(Component parent, Car car) {
         super((JFrame) SwingUtilities.getWindowAncestor(parent), "车辆详情", true);
         this.car = car;
-
+        
         initializeDialog();
     }
 
@@ -47,10 +47,10 @@ public class CarDetailsDialog extends JDialog {
      */
     private void setupLayout() {
         setLayout(new BorderLayout());
-
+        
         JPanel mainPanel = createMainPanel();
         add(mainPanel, BorderLayout.CENTER);
-
+        
         JPanel buttonPanel = createButtonPanel();
         add(buttonPanel, BorderLayout.SOUTH);
     }
@@ -61,31 +61,31 @@ public class CarDetailsDialog extends JDialog {
     private JPanel createMainPanel() {
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
+        
         GridBagConstraints gbc = createGridBagConstraints();
-
+        
         // 使用数组定义字段配置，便于维护
         Object[][] fieldConfigs = {
-                {"车辆ID:", String.valueOf(car.getCarId()), null},
-                {"车牌号:", car.getLicensePlateNumber(), null},
-                {"品牌:", car.getBrand(), null},
-                {"型号:", car.getModel(), null},
-                {"颜色:", car.getColor(), null},
-                {"状态:", car.getStatus(), getStatusColor(car.getStatus())},
-                {"日租金:", formatCurrency(car.getRent()), RENT_COLOR},
-                {"押金:", formatCurrency(car.getDeposit()), RENT_COLOR},
-                {"购买日期:", formatDate(car.getPurchaseDate()), null}
+            {"车辆ID:", String.valueOf(car.getCarId()), null},
+            {"车牌号:", car.getLicensePlateNumber(), null},
+            {"品牌:", car.getBrand(), null},
+            {"型号:", car.getModel(), null},
+            {"颜色:", car.getColor(), null},
+            {"状态:", car.getStatus(), getStatusColor(car.getStatus())},
+            {"日租金:", formatCurrency(car.getRent()), RENT_COLOR},
+            {"押金:", formatCurrency(car.getDeposit()), RENT_COLOR},
+            {"购买日期:", formatDate(car.getPurchaseDate()), null}
         };
-
+        
         int row = 0;
         for (Object[] config : fieldConfigs) {
-            addFieldRow(mainPanel, gbc, row,
-                    (String) config[0],
-                    (String) config[1],
-                    (Color) config[2]);
+            addFieldRow(mainPanel, gbc, row, 
+                (String) config[0], 
+                (String) config[1], 
+                (Color) config[2]);
             row++;
         }
-
+        
         return mainPanel;
     }
 
@@ -109,17 +109,17 @@ public class CarDetailsDialog extends JDialog {
         JLabel labelComponent = new JLabel(label);
         labelComponent.setFont(LABEL_FONT);
         panel.add(labelComponent, gbc);
-
+        
         // 值
         gbc.gridx = 1;
         JLabel valueComponent = new JLabel(value);
         valueComponent.setFont(VALUE_FONT);
-
+        
         // 设置颜色（如果指定了颜色）
         if (color != null) {
             valueComponent.setForeground(color);
         }
-
+        
         panel.add(valueComponent, gbc);
     }
 
@@ -153,7 +153,7 @@ public class CarDetailsDialog extends JDialog {
         }
         return "¥" + amount.toString();
     }
-
+    
     /**
      * 格式化货币 - 处理字符串类型
      */

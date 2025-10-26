@@ -26,19 +26,18 @@ public class RentInformationDAO {
      * @return 是否添加成功
      */
     public boolean addRentInformation(RentInformation rentInfo) {
-        String sql = "INSERT INTO rent_information (rent_id, car_id, staff_id, user_id, rent_date, return_date, pay_the_amount, return_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO rent_information (car_id, staff_id, user_id, rent_date, return_date, pay_the_amount, return_amount) VALUES (?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, rentInfo.getRentId());
-            pstmt.setInt(2, rentInfo.getCarId());
-            pstmt.setInt(3, rentInfo.getStaffId());
-            pstmt.setInt(4, rentInfo.getUserId());
-            pstmt.setDate(5, Date.valueOf(rentInfo.getRentDate()));
-            pstmt.setDate(6, Date.valueOf(rentInfo.getReturnDate()));
-            pstmt.setBigDecimal(7, rentInfo.getPayTheAmount());
-            pstmt.setBigDecimal(8, rentInfo.getReturnAmount());
+            
+            pstmt.setInt(1, rentInfo.getCarId());
+            pstmt.setInt(2, rentInfo.getStaffId());
+            pstmt.setInt(3, rentInfo.getUserId());
+            pstmt.setDate(4, Date.valueOf(rentInfo.getRentDate()));
+            pstmt.setDate(5, Date.valueOf(rentInfo.getReturnDate()));
+            pstmt.setBigDecimal(6, rentInfo.getPayTheAmount());
+            pstmt.setBigDecimal(7, rentInfo.getReturnAmount());
             
             int result = pstmt.executeUpdate();
             return result > 0;

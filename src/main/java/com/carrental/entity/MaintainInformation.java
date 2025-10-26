@@ -20,9 +20,9 @@ public class MaintainInformation {
     public MaintainInformation() {}
 
     // 带参构造函数
-    public MaintainInformation(int maintainId, int carId, LocalDate maintainDate,
-                               String maintainDescribe, LocalDate maintainBeginDate,
-                               LocalDate maintainFinishDate, BigDecimal maintainCost) {
+    public MaintainInformation(int maintainId, int carId, LocalDate maintainDate, 
+                             String maintainDescribe, LocalDate maintainBeginDate, 
+                             LocalDate maintainFinishDate, BigDecimal maintainCost) {
         this.maintainId = maintainId;
         this.carId = carId;
         this.maintainDate = maintainDate;

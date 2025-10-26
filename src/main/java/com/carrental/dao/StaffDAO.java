@@ -19,6 +19,53 @@ public class StaffDAO {
     }
 
     /**
+     * 员工登录验证
+     * 使用MySQL锁机制防止并发登录
+     * @param name 员工姓名
+     * @param password 密码
+     * @return 员工对象，登录失败返回null
+     */
+    public Staff login(String name, String password) {
+        String lockName = "staff_login_lock_" + name;
+        String sql = "SELECT * FROM staff WHERE name = ? AND password = ?";
+        
+        try (Connection conn = dbConnection.getConnection()) {
+            // 设置连接为手动提交模式，确保锁的原子性
+            conn.setAutoCommit(false);
+            
+            try {
+                // 尝试获取MySQL锁，超时时间为5秒
+                if (acquireLock(conn, lockName, 5)) {
+                    return performLoginWithLock(conn, lockName, name, password, sql);
+                } else {
+                    // 无法获取锁时，尝试自动恢复异常状态
+                    try {
+                        autoResetAbnormalState(conn, name);
+                        // 重新尝试获取锁
+                        if (acquireLock(conn, lockName, 2)) {
+                            // 重新执行登录流程
+                            return performLoginWithLock(conn, lockName, name, password, sql);
+                        }
+                    } catch (SQLException e) {
+                        // 忽略自动恢复过程中的异常
+                    }
+                    return null;
+                }
+                
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("员工登录验证失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    /**
      * 获取MySQL锁
      * @param conn 数据库连接
      * @param lockName 锁名称
@@ -38,7 +85,7 @@ public class StaffDAO {
         }
         return false;
     }
-
+    
     /**
      * 释放MySQL锁
      * @param conn 数据库连接
@@ -52,7 +99,7 @@ public class StaffDAO {
             pstmt.executeQuery();
         }
     }
-
+    
     /**
      * 检查员工是否已经登录
      * 使用staff表的role字段作为登录状态标记（临时方案）
@@ -76,7 +123,7 @@ public class StaffDAO {
         }
         return false;
     }
-
+    
     /**
      * 自动重置异常状态
      * 在检测到异常登录状态时自动重置，确保系统健壮性
@@ -88,11 +135,11 @@ public class StaffDAO {
         // 检查是否存在MySQL锁，如果不存在说明之前的会话已断开
         String lockName = "staff_login_lock_" + name;
         String checkLockSql = "SELECT IS_USED_LOCK(?)";
-
+        
         try (PreparedStatement pstmt = conn.prepareStatement(checkLockSql)) {
             pstmt.setString(1, lockName);
             ResultSet rs = pstmt.executeQuery();
-
+            
             if (rs.next()) {
                 // 如果锁不存在（返回NULL），说明之前的会话已断开，可以安全重置
                 if (rs.getObject(1) == null) {
@@ -101,7 +148,7 @@ public class StaffDAO {
             }
         }
     }
-
+    
     /**
      * 在已获取锁的情况下执行登录流程
      * @param conn 数据库连接
@@ -119,13 +166,13 @@ public class StaffDAO {
                 // 自动重置异常状态，确保系统健壮性
                 autoResetAbnormalState(conn, name);
             }
-
+            
             // 执行登录验证
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, name);
                 pstmt.setString(2, password);
                 ResultSet rs = pstmt.executeQuery();
-
+                
                 if (rs.next()) {
                     Staff staff = mapResultSetToStaff(rs);
                     // 标记用户为已登录状态
@@ -134,16 +181,16 @@ public class StaffDAO {
                     return staff;
                 }
             }
-
+            
             conn.commit();
             return null;
-
+            
         } finally {
             // 释放锁
             releaseLock(conn, lockName);
         }
     }
-
+    
     /**
      * 标记员工为已登录状态
      * @param conn 数据库连接
@@ -158,7 +205,7 @@ public class StaffDAO {
             pstmt.executeUpdate();
         }
     }
-
+    
     /**
      * 标记员工为已登出状态
      * @param conn 数据库连接
@@ -172,52 +219,6 @@ public class StaffDAO {
             pstmt.setString(1, name);
             pstmt.executeUpdate();
         }
-    }
-
-    /**
-     * 员工登录验证
-     * @param name 员工姓名
-     * @param password 密码
-     * @return 员工对象，登录失败返回null
-     */
-    public Staff login(String name, String password) {
-        String lockName = "staff_login_lock_" + name;
-        String sql = "SELECT * FROM staff WHERE name = ? AND password = ?";
-
-        try (Connection conn = dbConnection.getConnection()) {
-            // 设置连接为手动提交模式，确保锁的原子性
-            conn.setAutoCommit(false);
-
-            try {
-                // 尝试获取MySQL锁，超时时间为5秒
-                if (acquireLock(conn, lockName, 5)) {
-                    return performLoginWithLock(conn, lockName, name, password, sql);
-                } else {
-                    // 无法获取锁时，尝试自动恢复异常状态
-                    try {
-                        autoResetAbnormalState(conn, name);
-                        // 重新尝试获取锁
-                        if (acquireLock(conn, lockName, 2)) {
-                            // 重新执行登录流程
-                            return performLoginWithLock(conn, lockName, name, password, sql);
-                        }
-                    } catch (SQLException e) {
-                        // 忽略自动恢复过程中的异常
-                    }
-                    return null;
-                }
-
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            }
-
-        } catch (SQLException e) {
-            System.err.println("员工登录验证失败: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
     /**
@@ -384,10 +385,10 @@ public class StaffDAO {
      */
     public boolean logout(String name) {
         String lockName = "staff_logout_lock_" + name;
-
+        
         try (Connection conn = dbConnection.getConnection()) {
             conn.setAutoCommit(false);
-
+            
             try {
                 // 获取锁
                 if (acquireLock(conn, lockName, 5)) {
@@ -403,19 +404,19 @@ public class StaffDAO {
                     System.err.println("无法获取登出锁");
                     return false;
                 }
-
+                
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
             }
-
+            
         } catch (SQLException e) {
             System.err.println("员工登出失败: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
-
+    
     /**
      * 将ResultSet映射为Staff对象
      * @param rs ResultSet对象
@@ -434,7 +435,9 @@ public class StaffDAO {
         }
         
         staff.setPosition(rs.getString("position"));
-        staff.setRole(rs.getInt("role"));
+        // 确保role始终为正数（恢复原始权限等级）
+        int role = rs.getInt("role");
+        staff.setRole(Math.abs(role));
         staff.setPassword(rs.getString("password"));
         
         return staff;

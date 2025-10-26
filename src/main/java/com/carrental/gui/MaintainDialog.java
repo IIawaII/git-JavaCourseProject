@@ -22,7 +22,7 @@ public class MaintainDialog extends JDialog {
     private List<Car> carList;
     private MaintainInformationDAO maintainDAO;
     private int maintainId;
-
+    
     private JComboBox<String> carCombo;
     private JTextField maintainDateField;
     private JTextArea maintainDescribeArea;
@@ -31,7 +31,7 @@ public class MaintainDialog extends JDialog {
     private JTextField maintainCostField;
     private JButton confirmButton;
     private JButton cancelButton;
-
+    
     private boolean confirmed = false;
 
     public MaintainDialog(MaintainInformation maintainInfo, List<Car> carList, int maintainId) {
@@ -39,12 +39,12 @@ public class MaintainDialog extends JDialog {
         this.carList = carList;
         this.maintainDAO = new MaintainInformationDAO();
         this.maintainId = maintainId;
-
+        
         initializeComponents();
         setupLayout();
         setupEventHandlers();
         setupDialog();
-
+        
         if (maintainInfo != null) {
             loadData();
         }
@@ -59,26 +59,26 @@ public class MaintainDialog extends JDialog {
         for (Car car : carList) {
             carCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
         }
-
+        
         // 报修日期
         maintainDateField = new JTextField(15);
         maintainDateField.setText(LocalDate.now().toString());
-
+        
         // 维修描述
         maintainDescribeArea = new JTextArea(3, 20);
         maintainDescribeArea.setLineWrap(true);
         maintainDescribeArea.setWrapStyleWord(true);
-
+        
         // 维修开始日期
         maintainBeginDateField = new JTextField(15);
         maintainBeginDateField.setText(LocalDate.now().toString());
-
+        
         // 维修结束日期
         maintainFinishDateField = new JTextField(15);
-
+        
         // 维修费用
         maintainCostField = new JTextField(15);
-
+        
         // 按钮
         confirmButton = new JButton("确认");
         cancelButton = new JButton("取消");
@@ -89,50 +89,50 @@ public class MaintainDialog extends JDialog {
      */
     private void setupLayout() {
         setLayout(new BorderLayout());
-
+        
         // 主面板
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-
+        
         // 车辆选择
         gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("车辆:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(carCombo, gbc);
-
+        
         // 报修日期
         gbc.gridx = 0; gbc.gridy = 1; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("报修日期:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(maintainDateField, gbc);
-
+        
         // 维修描述
         gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = GridBagConstraints.NORTHEAST;
         mainPanel.add(new JLabel("维修描述:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(new JScrollPane(maintainDescribeArea), gbc);
-
+        
         // 维修开始日期
         gbc.gridx = 0; gbc.gridy = 3; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("开始日期:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(maintainBeginDateField, gbc);
-
+        
         // 维修结束日期
         gbc.gridx = 0; gbc.gridy = 4; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("结束日期:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(maintainFinishDateField, gbc);
-
+        
         // 维修费用
         gbc.gridx = 0; gbc.gridy = 5; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("维修费用:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(maintainCostField, gbc);
-
+        
         add(mainPanel, BorderLayout.CENTER);
-
+        
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(confirmButton);
@@ -172,7 +172,7 @@ public class MaintainDialog extends JDialog {
                     break;
                 }
             }
-
+            
             maintainDateField.setText(maintainInfo.getMaintainDate().toString());
             maintainDescribeArea.setText(maintainInfo.getMaintainDescribe());
             maintainBeginDateField.setText(maintainInfo.getMaintainBeginDate().toString());
@@ -190,43 +190,43 @@ public class MaintainDialog extends JDialog {
         if (!validateInput()) {
             return;
         }
-
+        
         try {
             MaintainInformation newMaintainInfo = new MaintainInformation();
             newMaintainInfo.setMaintainId(maintainId);
-
+            
             // 设置车辆ID
             String selectedCar = (String) carCombo.getSelectedItem();
             int carId = extractCarIdFromCombo(selectedCar);
             newMaintainInfo.setCarId(carId);
-
+            
             // 设置其他字段
             newMaintainInfo.setMaintainDate(LocalDate.parse(maintainDateField.getText().trim()));
             newMaintainInfo.setMaintainDescribe(maintainDescribeArea.getText().trim());
             newMaintainInfo.setMaintainBeginDate(LocalDate.parse(maintainBeginDateField.getText().trim()));
-
+            
             if (!maintainFinishDateField.getText().trim().isEmpty()) {
                 newMaintainInfo.setMaintainFinishDate(LocalDate.parse(maintainFinishDateField.getText().trim()));
             }
-
+            
             if (!maintainCostField.getText().trim().isEmpty()) {
                 newMaintainInfo.setMaintainCost(new BigDecimal(maintainCostField.getText().trim()));
             }
-
+            
             boolean success;
             if (maintainInfo == null) {
                 success = maintainDAO.addMaintainInformation(newMaintainInfo);
             } else {
                 success = maintainDAO.updateMaintainInformation(newMaintainInfo);
             }
-
+            
             if (success) {
                 confirmed = true;
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "保存失败", "错误", JOptionPane.ERROR_MESSAGE);
             }
-
+            
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "保存失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
@@ -248,36 +248,36 @@ public class MaintainDialog extends JDialog {
             maintainDateField.requestFocus();
             return false;
         }
-
+        
         if (maintainDescribeArea.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "请输入维修描述", "提示", JOptionPane.WARNING_MESSAGE);
             maintainDescribeArea.requestFocus();
             return false;
         }
-
+        
         if (maintainBeginDateField.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "请输入维修开始日期", "提示", JOptionPane.WARNING_MESSAGE);
             maintainBeginDateField.requestFocus();
             return false;
         }
-
+        
         try {
             LocalDate.parse(maintainDateField.getText().trim());
             LocalDate.parse(maintainBeginDateField.getText().trim());
-
+            
             if (!maintainFinishDateField.getText().trim().isEmpty()) {
                 LocalDate.parse(maintainFinishDateField.getText().trim());
             }
-
+            
             if (!maintainCostField.getText().trim().isEmpty()) {
                 new BigDecimal(maintainCostField.getText().trim());
             }
-
+            
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "日期或金额格式不正确", "提示", JOptionPane.WARNING_MESSAGE);
             return false;
         }
-
+        
         return true;
     }
 

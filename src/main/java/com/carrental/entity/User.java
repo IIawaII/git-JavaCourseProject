@@ -14,7 +14,6 @@ public class User {
     private LocalDate registerDate;        // 注册日期
     private String member;                 // 会员状态
     private String judge;                  // 信誉度评价
-    private String permit;
 
     // 无参构造函数
     public User() {}
@@ -35,6 +34,7 @@ public class User {
     public int getUserId() {
         return userId;
     }
+
     public void setUserId(int userId) {
         this.userId = userId;
     }
@@ -42,6 +42,7 @@ public class User {
     public String getName() {
         return name;
     }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -49,6 +50,7 @@ public class User {
     public String getIdentityId() {
         return identityId;
     }
+
     public void setIdentityId(String identityId) {
         this.identityId = identityId;
     }
@@ -56,6 +58,7 @@ public class User {
     public String getPhone() {
         return phone;
     }
+
     public void setPhone(String phone) {
         this.phone = phone;
     }
@@ -63,6 +66,7 @@ public class User {
     public LocalDate getRegisterDate() {
         return registerDate;
     }
+
     public void setRegisterDate(LocalDate registerDate) {
         this.registerDate = registerDate;
     }
@@ -70,6 +74,7 @@ public class User {
     public String getMember() {
         return member;
     }
+
     public void setMember(String member) {
         this.member = member;
     }
@@ -77,12 +82,10 @@ public class User {
     public String getJudge() {
         return judge;
     }
+
     public void setJudge(String judge) {
         this.judge = judge;
     }
-
-    public String getPermit() { return permit; }
-    public void setPermit(String permit) { this.permit = permit; }
 
     @Override
     public String toString() {

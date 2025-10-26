@@ -1,8 +1,6 @@
 package com.carrental.gui;
 
 import com.carrental.entity.Car;
-import com.carrental.entity.Staff;
-import com.carrental.entity.User;
 import com.carrental.service.CarService;
 
 import javax.swing.*;
@@ -24,18 +22,13 @@ public class CarManagementPanel extends JPanel {
     private JTextField searchField;
     private JComboBox<String> statusComboBox;
     private JComboBox<String> brandComboBox;
-    private String userPermit;
-    private User currentUser;
-    private Staff currentStaff;
 
     public CarManagementPanel() {
         this.carService = new CarService();
-        this.userPermit = userPermit;
         initializeComponents();
         setupLayout();
         setupEventHandlers();
         loadCarData();
-        setButtonState();
     }
 
     /**
@@ -339,24 +332,5 @@ public class CarManagementPanel extends JPanel {
      */
     public void refreshData() {
         loadCarData();
-    }
-    private void setButtonState() {
-        // 如果用户是普通用户（customer），禁用添加、修改、删除按钮
-        if ("customer".equals(userPermit)) {
-            for (Component comp : getComponentsInPanel()) {
-                if (comp instanceof JButton) {
-                    JButton button = (JButton) comp;
-                    if ("添加车辆".equals(button.getText()) ||
-                            "修改车辆".equals(button.getText()) ||
-                            "删除车辆".equals(button.getText())) {
-                        button.setEnabled(false);
-                    }
-                }
-            }
-        }
-    }
-
-    private Component[] getComponentsInPanel() {
-        return ((JPanel) this.getComponent(2)).getComponents(); // 获取按钮面板的组件
     }
 }

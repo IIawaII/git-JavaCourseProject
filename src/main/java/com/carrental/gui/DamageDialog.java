@@ -20,26 +20,26 @@ public class DamageDialog extends JDialog {
     private DamageInformation damageInfo;
     private List<Car> carList;
     private DamageInformationDAO damageDAO;
-
+    
     private JComboBox<String> carCombo;
     private JTextField damageDateField;
     private JTextArea damageDescribeArea;
     private JComboBox<String> damageStateCombo;
     private JButton confirmButton;
     private JButton cancelButton;
-
+    
     private boolean confirmed = false;
 
     public DamageDialog(DamageInformation damageInfo, List<Car> carList) {
         this.damageInfo = damageInfo;
         this.carList = carList;
         this.damageDAO = new DamageInformationDAO();
-
+        
         initializeComponents();
         setupLayout();
         setupEventHandlers();
         setupDialog();
-
+        
         if (damageInfo != null) {
             loadData();
         }
@@ -54,19 +54,19 @@ public class DamageDialog extends JDialog {
         for (Car car : carList) {
             carCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
         }
-
+        
         // 损坏日期
         damageDateField = new JTextField(15);
         damageDateField.setText(LocalDate.now().toString());
-
+        
         // 损坏描述
         damageDescribeArea = new JTextArea(4, 20);
         damageDescribeArea.setLineWrap(true);
         damageDescribeArea.setWrapStyleWord(true);
-
+        
         // 维修状态
         damageStateCombo = new JComboBox<>(new String[]{"未维修", "已维修"});
-
+        
         // 按钮
         confirmButton = new JButton("确认");
         cancelButton = new JButton("取消");
@@ -77,38 +77,38 @@ public class DamageDialog extends JDialog {
      */
     private void setupLayout() {
         setLayout(new BorderLayout());
-
+        
         // 主面板
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-
+        
         // 车辆选择
         gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("车辆:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(carCombo, gbc);
-
+        
         // 损坏日期
         gbc.gridx = 0; gbc.gridy = 1; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("损坏日期:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(damageDateField, gbc);
-
+        
         // 损坏描述
         gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = GridBagConstraints.NORTHEAST;
         mainPanel.add(new JLabel("损坏描述:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(new JScrollPane(damageDescribeArea), gbc);
-
+        
         // 维修状态
         gbc.gridx = 0; gbc.gridy = 3; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(new JLabel("维修状态:"), gbc);
         gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(damageStateCombo, gbc);
-
+        
         add(mainPanel, BorderLayout.CENTER);
-
+        
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(confirmButton);
@@ -148,7 +148,7 @@ public class DamageDialog extends JDialog {
                     break;
                 }
             }
-
+            
             damageDateField.setText(damageInfo.getDamageDate().toString());
             damageDescribeArea.setText(damageInfo.getDamageDescribe());
             damageStateCombo.setSelectedItem(damageInfo.getDamageState());
@@ -162,38 +162,38 @@ public class DamageDialog extends JDialog {
         if (!validateInput()) {
             return;
         }
-
+        
         try {
             DamageInformation newDamageInfo = new DamageInformation();
-
+            
             if (damageInfo != null) {
                 newDamageInfo.setDamageId(damageInfo.getDamageId());
             }
-
+            
             // 设置车辆ID
             String selectedCar = (String) carCombo.getSelectedItem();
             int carId = extractCarIdFromCombo(selectedCar);
             newDamageInfo.setCarId(carId);
-
+            
             // 设置其他字段
             newDamageInfo.setDamageDate(LocalDate.parse(damageDateField.getText().trim()));
             newDamageInfo.setDamageDescribe(damageDescribeArea.getText().trim());
             newDamageInfo.setDamageState((String) damageStateCombo.getSelectedItem());
-
+            
             boolean success;
             if (damageInfo == null) {
                 success = damageDAO.addDamageInformation(newDamageInfo);
             } else {
                 success = damageDAO.updateDamageInformation(newDamageInfo);
             }
-
+            
             if (success) {
                 confirmed = true;
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "保存失败", "错误", JOptionPane.ERROR_MESSAGE);
             }
-
+            
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "保存失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
@@ -215,13 +215,13 @@ public class DamageDialog extends JDialog {
             damageDateField.requestFocus();
             return false;
         }
-
+        
         if (damageDescribeArea.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "请输入损坏描述", "提示", JOptionPane.WARNING_MESSAGE);
             damageDescribeArea.requestFocus();
             return false;
         }
-
+        
         try {
             LocalDate.parse(damageDateField.getText().trim());
         } catch (Exception e) {
@@ -229,7 +229,7 @@ public class DamageDialog extends JDialog {
             damageDateField.requestFocus();
             return false;
         }
-
+        
         return true;
     }
 

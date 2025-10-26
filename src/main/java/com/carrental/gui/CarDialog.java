@@ -6,11 +6,8 @@ import com.carrental.service.CarService;
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 /**
  * 车辆信息对话框（添加/修改）
@@ -21,7 +18,7 @@ public class CarDialog extends JDialog {
     private JTextField carIdField, licensePlateField, brandField, modelField, colorField;
     private JComboBox<String> statusComboBox;
     private JFormattedTextField rentField, depositField;
-    private JFormattedTextField purchaseDateField;
+    private DatePicker purchaseDatePicker;
     private JButton saveButton, cancelButton;
     private CarManagementPanel parentPanel;
 
@@ -59,12 +56,11 @@ public class CarDialog extends JDialog {
         rentField = new JFormattedTextField(moneyFormatter);
         depositField = new JFormattedTextField(moneyFormatter);
 
-        // 日期输入框 (yyyy-MM-dd)
-        DateFormatter dateFormatter = new DateFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        purchaseDateField = new JFormattedTextField(dateFormatter);
+        // 日期选择器
+        purchaseDatePicker = new DatePicker();
 
         // 字体
-        JTextField[] fields = {licensePlateField, brandField, modelField, colorField, rentField, depositField, purchaseDateField};
+        JTextField[] fields = {licensePlateField, brandField, modelField, colorField, rentField, depositField};
         for (JTextField f : fields) f.setFont(font);
 
         saveButton = new JButton("保存");
@@ -83,7 +79,7 @@ public class CarDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
 
         String[] labels = {"车辆ID:", "车牌号:", "品牌:", "型号:", "颜色:", "状态:", "日租金:", "押金:", "购买日期:"};
-        Component[] components = {carIdField, licensePlateField, brandField, modelField, colorField, statusComboBox, rentField, depositField, purchaseDateField};
+        Component[] components = {carIdField, licensePlateField, brandField, modelField, colorField, statusComboBox, rentField, depositField, purchaseDatePicker};
 
         for (int i = 0; i < labels.length; i++) {
             gbc.gridx = 0;
@@ -126,7 +122,7 @@ public class CarDialog extends JDialog {
         rentField.setValue(car.getRent());
         depositField.setValue(new BigDecimal(car.getDeposit()));
         if (car.getPurchaseDate() != null)
-            purchaseDateField.setText(car.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            purchaseDatePicker.setSelectedDate(car.getPurchaseDate());
     }
 
     private void saveCar() {
@@ -138,7 +134,7 @@ public class CarDialog extends JDialog {
         if (colorField.getText().trim().isEmpty()) { showError("请输入颜色"); return; }
         if (rentField.getValue() == null) { showError("请输入日租金"); return; }
         if (depositField.getValue() == null) { showError("请输入押金"); return; }
-        if (purchaseDateField.getText().trim().isEmpty()) { showError("请输入购买日期"); return; }
+        if (!purchaseDatePicker.isValidDate()) { showError("请选择有效的购买日期"); return; }
 
         try {
             Car carToSave = car == null ? new Car() : car;
@@ -150,7 +146,7 @@ public class CarDialog extends JDialog {
             carToSave.setStatus((String) statusComboBox.getSelectedItem());
             carToSave.setRent(new BigDecimal(rentField.getText().trim()));
             carToSave.setDeposit(depositField.getText().trim());
-            carToSave.setPurchaseDate(LocalDate.parse(purchaseDateField.getText().trim()));
+            carToSave.setPurchaseDate(purchaseDatePicker.getSelectedDate());
 
             boolean success = (car == null) ? carService.addCar(carToSave) : carService.updateCar(carToSave);
             if (success) {
@@ -169,21 +165,4 @@ public class CarDialog extends JDialog {
         JOptionPane.showMessageDialog(this, msg, "错误", JOptionPane.ERROR_MESSAGE);
     }
 
-    // 内部类：日期格式化
-    static class DateFormatter extends JFormattedTextField.AbstractFormatter {
-        private final DateTimeFormatter formatter;
-
-        public DateFormatter(DateTimeFormatter formatter) { this.formatter = formatter; }
-
-        @Override
-        public Object stringToValue(String text) {
-            return LocalDate.parse(text, formatter);
-        }
-
-        @Override
-        public String valueToString(Object value) {
-            if (value == null) return "";
-            return ((LocalDate)value).format(formatter);
-        }
-    }
 }

@@ -1,5 +1,6 @@
 package com.carrental.util;
 
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -9,7 +10,7 @@ import java.sql.SQLException;
  * 使用单例模式管理数据库连接
  */
 public class DatabaseConnection {
-    private static final String URL = "jdbc:mysql://localhost:3306/car_rental_system?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://10.245.203.137:3306/car_rental_system?useSSL=false&serverTimezone=UTC";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "12345678";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
@@ -21,13 +22,14 @@ public class DatabaseConnection {
 
     /**
      * 私有构造函数，防止外部实例化
-     /**
-     * 私有构造函数，防止外部实例化
      */
     private DatabaseConnection() {
         initializeConnection();
     }
 
+    /**
+     * 初始化数据库连接
+     */
     private void initializeConnection() {
         try {
             Class.forName(DRIVER);
@@ -62,7 +64,7 @@ public class DatabaseConnection {
             // 如果尚未初始化，先初始化连接
             initializeConnection();
         }
-
+        
         try {
             // 如果连接失败过，尝试重新连接
             if (connectionFailed || connection == null || connection.isClosed()) {
@@ -84,7 +86,6 @@ public class DatabaseConnection {
         }
         return connection;
     }
-
 
     /**
      * 关闭数据库连接
@@ -113,6 +114,11 @@ public class DatabaseConnection {
             return false;
         }
     }
+
+    /**
+     * 检查连接是否失败
+     * @return 是否连接失败
+     */
     public boolean isConnectionFailed() {
         if (!initialized) {
             // 如果尚未初始化，先初始化
