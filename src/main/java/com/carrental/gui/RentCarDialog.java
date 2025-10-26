@@ -245,7 +245,7 @@ public class RentCarDialog extends JDialog {
             UserComboItem userItem = (UserComboItem) userComboBox.getSelectedItem();
             LocalDate rentDate = rentDatePicker.getSelectedDate();
             LocalDate returnDate = returnDatePicker.getSelectedDate();
-            int staffId = 1; // TODO: 从登录状态获取
+            int staffId = 1; 
             BigDecimal rentAmount = carService.calculateRent(carItem.getCar().getCarId(), rentDate, returnDate);
             int result = JOptionPane.showConfirmDialog(this,
                 "确认租车信息:\n" +
