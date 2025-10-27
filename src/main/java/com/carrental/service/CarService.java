@@ -2,6 +2,7 @@ package com.carrental.service;
 
 import com.carrental.dao.CarDAO;
 import com.carrental.dao.RentInformationDAO;
+import com.carrental.util.AppLogger;
 import com.carrental.entity.Car;
 import com.carrental.entity.RentInformation;
 
@@ -37,7 +38,7 @@ public class CarService {
         List<Car> existingCars = carDAO.getAllCars();
         for (Car existingCar : existingCars) {
             if (existingCar.getLicensePlateNumber().equals(car.getLicensePlateNumber())) {
-                System.err.println("车牌号已存在: " + car.getLicensePlateNumber());
+                AppLogger.warn("车牌号已存在: " + car.getLicensePlateNumber());
                 return false;
             }
         }
@@ -55,7 +56,7 @@ public class CarService {
         List<RentInformation> rentInfos = rentInfoDAO.getRentInformationByCarId(carId);
         for (RentInformation rentInfo : rentInfos) {
             if (rentInfo.getReturnDate() == null || rentInfo.getReturnDate().isAfter(LocalDate.now())) {
-                System.err.println("车辆正在租借中，无法删除");
+                AppLogger.warn("车辆正在租借中，无法删除");
                 return false;
             }
         }
@@ -99,6 +100,14 @@ public class CarService {
      */
     public List<Car> getAvailableCars() {
         return carDAO.getCarsByStatus("空闲");
+    }
+
+    /**
+     * 获取下一个可用车辆ID（由DAO实现 MAX+1）
+     * @return 下一个 car_id
+     */
+    public int getNextCarId() {
+        return carDAO.getNextCarId();
     }
 
     /**
@@ -146,7 +155,7 @@ public class CarService {
      */
     public BigDecimal calculateRent(int carId, LocalDate rentDate, LocalDate returnDate) {
         if (rentDate.isAfter(returnDate)) {
-            System.err.println("租借日期不能晚于归还日期");
+            AppLogger.warn("租借日期不能晚于归还日期");
             return BigDecimal.ZERO;
         }
         
@@ -160,27 +169,27 @@ public class CarService {
      */
     private boolean validateCar(Car car) {
         if (car.getLicensePlateNumber() == null || car.getLicensePlateNumber().trim().isEmpty()) {
-            System.err.println("车牌号不能为空");
+            AppLogger.warn("车牌号不能为空");
             return false;
         }
         
         if (car.getModel() == null || car.getModel().trim().isEmpty()) {
-            System.err.println("型号不能为空");
+            AppLogger.warn("型号不能为空");
             return false;
         }
         
         if (car.getBrand() == null || car.getBrand().trim().isEmpty()) {
-            System.err.println("品牌不能为空");
+            AppLogger.warn("品牌不能为空");
             return false;
         }
         
         if (car.getRent() == null || car.getRent().compareTo(BigDecimal.ZERO) <= 0) {
-            System.err.println("日租金必须大于0");
+            AppLogger.warn("日租金必须大于0");
             return false;
         }
         
         if (car.getPurchaseDate() == null || car.getPurchaseDate().isAfter(LocalDate.now())) {
-            System.err.println("购买日期不能为空或晚于当前日期");
+            AppLogger.warn("购买日期不能为空或晚于当前日期");
             return false;
         }
         

@@ -2,6 +2,7 @@ package com.carrental.test;
 
 import com.carrental.entity.Staff;
 import com.carrental.service.UserService;
+import com.carrental.util.AppLogger;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,14 +18,14 @@ public class ConcurrentLoginTest {
     private static final int TEST_ROUNDS = 3;
     
     public static void main(String[] args) {
-        System.out.println("开始并发登录测试...");
-        System.out.println("测试用户: " + TEST_USERNAME);
-        System.out.println("并发线程数: " + THREAD_COUNT);
-        System.out.println("测试轮数: " + TEST_ROUNDS);
-        System.out.println("=====================================");
+    AppLogger.info("开始并发登录测试...");
+    AppLogger.info("测试用户: " + TEST_USERNAME);
+    AppLogger.info("并发线程数: " + THREAD_COUNT);
+    AppLogger.info("测试轮数: " + TEST_ROUNDS);
+    AppLogger.info("=====================================");
         
         for (int round = 1; round <= TEST_ROUNDS; round++) {
-            System.out.println("\n第 " + round + " 轮测试:");
+            AppLogger.info("\n第 " + round + " 轮测试:");
             testConcurrentLogin();
             
             // 等待一段时间再进行下一轮测试
@@ -36,8 +37,8 @@ public class ConcurrentLoginTest {
             }
         }
         
-        System.out.println("\n=====================================");
-        System.out.println("并发登录测试完成！");
+            AppLogger.info("\n=====================================");
+            AppLogger.info("并发登录测试完成！");
     }
     
     /**
@@ -63,28 +64,28 @@ public class ConcurrentLoginTest {
                     
                     if (staff != null) {
                         successCount.incrementAndGet();
-                        System.out.println("线程 " + threadId + ": 登录成功 - " + staff.getName());
+                        AppLogger.info("线程 " + threadId + ": 登录成功 - " + staff.getName());
                         
                         // 模拟用户操作一段时间
                         Thread.sleep(1000);
-                        
+
                         // 登出
                         if (userService.logout(TEST_USERNAME)) {
-                            System.out.println("线程 " + threadId + ": 登出成功");
+                            AppLogger.info("线程 " + threadId + ": 登出成功");
                         } else {
-                            System.out.println("线程 " + threadId + ": 登出失败");
+                            AppLogger.warn("线程 " + threadId + ": 登出失败");
                         }
                     } else {
                         failureCount.incrementAndGet();
-                        System.out.println("线程 " + threadId + ": 登录失败（可能用户已登录）");
+                        AppLogger.info("线程 " + threadId + ": 登录失败（可能用户已登录）");
                     }
                     
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    System.err.println("线程 " + threadId + " 被中断");
+                    AppLogger.warn("线程 " + threadId + " 被中断");
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
-                    System.err.println("线程 " + threadId + " 发生异常: " + e.getMessage());
+                    AppLogger.logException("线程 " + threadId + " 发生异常: " + e.getMessage(), e);
                 } finally {
                     endLatch.countDown();
                 }
@@ -99,24 +100,24 @@ public class ConcurrentLoginTest {
             boolean finished = endLatch.await(30, TimeUnit.SECONDS);
             
             if (!finished) {
-                System.err.println("测试超时！");
+                AppLogger.warn("测试超时！");
             }
-            
+
             // 输出测试结果
-            System.out.println("测试结果:");
-            System.out.println("  成功登录次数: " + successCount.get());
-            System.out.println("  失败登录次数: " + failureCount.get());
-            System.out.println("  预期结果: 只有1个线程应该成功登录");
-            
+            AppLogger.info("测试结果:");
+            AppLogger.info("  成功登录次数: " + successCount.get());
+            AppLogger.info("  失败登录次数: " + failureCount.get());
+            AppLogger.info("  预期结果: 只有1个线程应该成功登录");
+
             if (successCount.get() == 1) {
-                System.out.println("  ✓ 测试通过！MySQL锁机制工作正常");
+                AppLogger.info("  ✓ 测试通过！MySQL锁机制工作正常");
             } else {
-                System.out.println("  ✗ 测试失败！可能存在并发问题");
+                AppLogger.warn("  ✗ 测试失败！可能存在并发问题");
             }
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println("测试被中断");
+            AppLogger.warn("测试被中断");
         } finally {
             executor.shutdown();
         }

@@ -1,11 +1,14 @@
 package com.carrental.gui;
 
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 财务报表面板
@@ -110,124 +113,131 @@ public class FinancialReportPanel extends JPanel {
      * 加载数据
      */
     private void loadData() {
-        loadProfitData();
-        loadUnpaidFineData();
-        loadStaffCarCountData();
-        loadRepairedCarData();
+        // 在后台线程加载数据，避免阻塞 EDT。查询结果在 done() 中更新表格。
+        refreshButton.setEnabled(false);
+
+        final List<Object[]> profitRows = new ArrayList<>();
+        final List<Object[]> unpaidRows = new ArrayList<>();
+        final List<Object[]> staffCountRows = new ArrayList<>();
+        final List<Object[]> repairedRows = new ArrayList<>();
+
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                profitRows.addAll(fetchProfitData());
+                unpaidRows.addAll(fetchUnpaidFineData());
+                staffCountRows.addAll(fetchStaffCarCountData());
+                repairedRows.addAll(fetchRepairedCarData());
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // 更新 UI（在 EDT 中执行）
+                DefaultTableModel profitModel = (DefaultTableModel) profitTable.getModel();
+                profitModel.setRowCount(0);
+                for (Object[] r : profitRows) profitModel.addRow(r);
+
+                DefaultTableModel unpaidModel = (DefaultTableModel) unpaidFineTable.getModel();
+                unpaidModel.setRowCount(0);
+                for (Object[] r : unpaidRows) unpaidModel.addRow(r);
+
+                DefaultTableModel staffModel = (DefaultTableModel) staffCarCountTable.getModel();
+                staffModel.setRowCount(0);
+                for (Object[] r : staffCountRows) staffModel.addRow(r);
+
+                DefaultTableModel repairedModel = (DefaultTableModel) repairedCarTable.getModel();
+                repairedModel.setRowCount(0);
+                for (Object[] r : repairedRows) repairedModel.addRow(r);
+
+                refreshButton.setEnabled(true);
+            }
+        };
+
+        worker.execute();
     }
 
     /**
      * 加载利润分析数据
      */
-    private void loadProfitData() {
-        DefaultTableModel model = (DefaultTableModel) profitTable.getModel();
-        model.setRowCount(0);
-        
+    private List<Object[]> fetchProfitData() {
+        List<Object[]> rows = new ArrayList<>();
         String sql = "SELECT * FROM profit_view";
-        
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
-            
             while (rs.next()) {
                 Object[] row = {
-                    rs.getInt("车辆编号"),
-                    rs.getBigDecimal("用户支付金额"),
-                    rs.getBigDecimal("归还用户金额"),
-                    rs.getBigDecimal("用户造成的损坏"),
-                    rs.getBigDecimal("利润")
+                    rs.getObject(1),
+                    rs.getObject(2),
+                    rs.getObject(3),
+                    rs.getObject(4),
+                    rs.getObject(5)
                 };
-                model.addRow(row);
+                rows.add(row);
             }
-            
         } catch (SQLException e) {
-            System.err.println("加载利润分析数据失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("加载利润分析数据失败: " + e.getMessage(), e);
         }
+        return rows;
     }
 
     /**
      * 加载未交罚款数据
      */
-    private void loadUnpaidFineData() {
-        DefaultTableModel model = (DefaultTableModel) unpaidFineTable.getModel();
-        model.setRowCount(0);
-        
+    private List<Object[]> fetchUnpaidFineData() {
+        List<Object[]> rows = new ArrayList<>();
         String sql = "SELECT * FROM fine_not_paied";
-        
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
-            
             while (rs.next()) {
-                Object[] row = {
-                    rs.getString("名字"),
-                    rs.getBigDecimal("罚款金额")
-                };
-                model.addRow(row);
+                Object[] row = { rs.getObject(1), rs.getObject(2) };
+                rows.add(row);
             }
-            
         } catch (SQLException e) {
-            System.err.println("加载未交罚款数据失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("加载未交罚款数据失败: " + e.getMessage(), e);
         }
+        return rows;
     }
 
     /**
      * 加载员工管理车辆数量数据
      */
-    private void loadStaffCarCountData() {
-        DefaultTableModel model = (DefaultTableModel) staffCarCountTable.getModel();
-        model.setRowCount(0);
-        
+    private List<Object[]> fetchStaffCarCountData() {
+        List<Object[]> rows = new ArrayList<>();
         String sql = "SELECT * FROM staff_car_count";
-        
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
-            
             while (rs.next()) {
-                Object[] row = {
-                    rs.getString("管理员工"),
-                    rs.getInt("管理车辆数量")
-                };
-                model.addRow(row);
+                Object[] row = { rs.getObject(1), rs.getObject(2) };
+                rows.add(row);
             }
-            
         } catch (SQLException e) {
-            System.err.println("加载员工管理车辆数量数据失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("加载员工管理车辆数量数据失败: " + e.getMessage(), e);
         }
+        return rows;
     }
 
     /**
      * 加载已维修车辆数据
      */
-    private void loadRepairedCarData() {
-        DefaultTableModel model = (DefaultTableModel) repairedCarTable.getModel();
-        model.setRowCount(0);
-        
+    private List<Object[]> fetchRepairedCarData() {
+        List<Object[]> rows = new ArrayList<>();
         String sql = "SELECT * FROM repaired_car";
-        
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
-            
             while (rs.next()) {
                 Object[] row = {
-                    rs.getString("车牌号"),
-                    rs.getString("型号"),
-                    rs.getString("颜色"),
-                    rs.getString("状态"),
-                    rs.getBigDecimal("日租金"),
-                    rs.getString("押金")
+                    rs.getObject(1), rs.getObject(2), rs.getObject(3), rs.getObject(4), rs.getObject(5), rs.getObject(6)
                 };
-                model.addRow(row);
+                rows.add(row);
             }
-            
         } catch (SQLException e) {
-            System.err.println("加载已维修车辆数据失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("加载已维修车辆数据失败: " + e.getMessage(), e);
         }
+        return rows;
     }
 }

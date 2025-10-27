@@ -25,8 +25,8 @@ public class TrafficFineDialog extends JDialog {
     private List<User> userList;
     private TrafficFineDAO trafficFineDAO;
     
-    private JComboBox<String> carCombo;
-    private JComboBox<String> userCombo;
+    private JComboBox<Object> carCombo;
+    private JComboBox<Object> userCombo;
     private JTextField violationDateField;
     private JTextField offendingLocationField;
     private JTextField fineField;
@@ -58,14 +58,34 @@ public class TrafficFineDialog extends JDialog {
     private void initializeComponents() {
         // 车辆选择
         carCombo = new JComboBox<>();
+        carCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.Car) {
+                    setText(((com.carrental.entity.Car) value).getLicensePlateNumber());
+                }
+                return this;
+            }
+        });
         for (Car car : carList) {
-            carCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
+            carCombo.addItem(car);
         }
         
         // 用户选择
         userCombo = new JComboBox<>();
+        userCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.User) {
+                    setText(((com.carrental.entity.User) value).getName());
+                }
+                return this;
+            }
+        });
         for (User user : userList) {
-            userCombo.addItem(user.getName() + " (ID:" + user.getUserId() + ")");
+            userCombo.addItem(user);
         }
         
         // 违规日期
@@ -168,8 +188,8 @@ public class TrafficFineDialog extends JDialog {
         if (trafficFine != null) {
             // 设置车辆选择
             for (int i = 0; i < carCombo.getItemCount(); i++) {
-                String item = carCombo.getItemAt(i);
-                if (item.contains("(ID:" + trafficFine.getCarId() + ")")) {
+                Object item = carCombo.getItemAt(i);
+                if (item instanceof Car && ((Car) item).getCarId() == trafficFine.getCarId()) {
                     carCombo.setSelectedIndex(i);
                     break;
                 }
@@ -177,8 +197,8 @@ public class TrafficFineDialog extends JDialog {
             
             // 设置用户选择
             for (int i = 0; i < userCombo.getItemCount(); i++) {
-                String item = userCombo.getItemAt(i);
-                if (item.contains("(ID:" + trafficFine.getUserId() + ")")) {
+                Object item = userCombo.getItemAt(i);
+                if (item instanceof User && ((User) item).getUserId() == trafficFine.getUserId()) {
                     userCombo.setSelectedIndex(i);
                     break;
                 }
@@ -207,13 +227,13 @@ public class TrafficFineDialog extends JDialog {
             }
             
             // 设置车辆ID
-            String selectedCar = (String) carCombo.getSelectedItem();
-            int carId = extractCarIdFromCombo(selectedCar);
+            Object selectedCarObj = carCombo.getSelectedItem();
+            int carId = extractCarIdFromCombo(selectedCarObj);
             newTrafficFine.setCarId(carId);
             
             // 设置用户ID
-            String selectedUser = (String) userCombo.getSelectedItem();
-            int userId = extractUserIdFromCombo(selectedUser);
+            Object selectedUserObj = userCombo.getSelectedItem();
+            int userId = extractUserIdFromCombo(selectedUserObj);
             newTrafficFine.setUserId(userId);
             
             // 设置其他字段
@@ -284,11 +304,9 @@ public class TrafficFineDialog extends JDialog {
     /**
      * 从下拉框文本中提取车辆ID
      */
-    private int extractCarIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractCarIdFromCombo(Object comboItem) {
+        if (comboItem instanceof Car) {
+            return ((Car) comboItem).getCarId();
         }
         return -1;
     }
@@ -296,11 +314,9 @@ public class TrafficFineDialog extends JDialog {
     /**
      * 从下拉框文本中提取用户ID
      */
-    private int extractUserIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractUserIdFromCombo(Object comboItem) {
+        if (comboItem instanceof User) {
+            return ((User) comboItem).getUserId();
         }
         return -1;
     }

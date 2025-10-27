@@ -3,6 +3,7 @@ package com.carrental.gui;
 import com.carrental.entity.Staff;
 import com.carrental.service.UserService;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -259,12 +260,11 @@ public class LoginFrame extends JFrame {
                         dispose();
                         new MainFrame(staff).setVisible(true);
                     } else {
-                        // 检查是否是重复登录或其他错误
-                        try {
-                            // 由于UserService中已经处理了重复登录检查，这里显示相应的错误信息
-                            showMessage("登录失败！可能原因：\n1. 用户名或密码错误\n2. 该用户已登录，无法重复登录", 
-                                       "登录失败", JOptionPane.ERROR_MESSAGE);
-                        } catch (Exception e) {
+                        // 如果上一次登录被锁阻塞，显示更明确的提示
+                        if (userService != null && userService.wasLastLoginBlocked()) {
+                            showMessage("当前用户已在另一台设备登录", "登录失败", JOptionPane.WARNING_MESSAGE);
+                        } else {
+                            // 通用失败提示（用户名/密码错误 或 其他原因）
                             showMessage("登录失败！可能原因：\n1. 用户名或密码错误\n2. 该用户已登录，无法重复登录", 
                                        "登录失败", JOptionPane.ERROR_MESSAGE);
                         }
@@ -343,7 +343,7 @@ public class LoginFrame extends JFrame {
                 setIconImage(icon);
             }
         } catch (Exception e) {
-            System.err.println("无法加载图标文件: " + e.getMessage());
+            AppLogger.logException("无法加载图标文件: " + e.getMessage(), e);
         }
     }
 
@@ -374,7 +374,7 @@ public class LoginFrame extends JFrame {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            System.err.println("无法设置系统外观: " + e.getMessage());
+            AppLogger.logException("无法设置系统外观: " + e.getMessage(), e);
         }
     }
 }

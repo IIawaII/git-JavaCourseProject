@@ -186,19 +186,44 @@ public class RentCarDialog extends JDialog {
      * 加载数据
      */
     private void loadData() {
+        // load available cars and users in background
         carComboBox.removeAllItems();
-        for (Car car : carService.getAvailableCars()) {
-            carComboBox.addItem(new CarComboItem(car));
-        }
         userComboBox.removeAllItems();
-        for (User user : userService.getAllUsers()) {
-            userComboBox.addItem(new UserComboItem(user));
-        }
-        // 默认日期
-    rentDatePicker.setSelectedDate(LocalDate.now());
-    returnDatePicker.setSelectedDate(LocalDate.now().plusDays(1));
-    rentDatePicker.repaint();
-    returnDatePicker.repaint();
+        refreshControlsBeforeLoad();
+
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            private java.util.List<Car> cars;
+            private java.util.List<User> users;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                cars = carService.getAvailableCars();
+                users = userService.getAllUsers();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    if (cars != null) for (Car car : cars) carComboBox.addItem(new CarComboItem(car));
+                    if (users != null) for (User user : users) userComboBox.addItem(new UserComboItem(user));
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(RentCarDialog.this, "加载租车数据失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    // 默认日期
+                    rentDatePicker.setSelectedDate(LocalDate.now());
+                    returnDatePicker.setSelectedDate(LocalDate.now().plusDays(1));
+                    rentDatePicker.repaint();
+                    returnDatePicker.repaint();
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void refreshControlsBeforeLoad() {
+        carComboBox.removeAllItems();
+        userComboBox.removeAllItems();
     }
 
     // 下拉框显示友好对象
@@ -224,15 +249,33 @@ public class RentCarDialog extends JDialog {
      */
     private void calculateRent() {
         if (!validateInput()) return;
-        try {
-            CarComboItem carItem = (CarComboItem) carComboBox.getSelectedItem();
-            LocalDate rentDate = rentDatePicker.getSelectedDate();
-            LocalDate returnDate = returnDatePicker.getSelectedDate();
-            BigDecimal rentAmount = carService.calculateRent(carItem.getCar().getCarId(), rentDate, returnDate);
-            rentAmountLabel.setText("¥" + rentAmount.toString());
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "计算租金失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
-        }
+        // calculate rent in background
+        calculateButton.setEnabled(false);
+        rentAmountLabel.setText("计算中...");
+        final CarComboItem carItem = (CarComboItem) carComboBox.getSelectedItem();
+        final LocalDate rentDate = rentDatePicker.getSelectedDate();
+        final LocalDate returnDate = returnDatePicker.getSelectedDate();
+
+        SwingWorker<java.math.BigDecimal, Void> worker = new SwingWorker<java.math.BigDecimal, Void>() {
+            @Override
+            protected java.math.BigDecimal doInBackground() throws Exception {
+                return carService.calculateRent(carItem.getCar().getCarId(), rentDate, returnDate);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    BigDecimal rentAmount = get();
+                    rentAmountLabel.setText("¥" + rentAmount.toString());
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(RentCarDialog.this, "计算租金失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                    rentAmountLabel.setText("¥0.00");
+                } finally {
+                    calculateButton.setEnabled(true);
+                }
+            }
+        };
+        worker.execute();
     }
 
     /**
@@ -240,31 +283,57 @@ public class RentCarDialog extends JDialog {
      */
     private void performRent() {
         if (!validateInput()) return;
+        // capture selected values before background work
+        final CarComboItem carItem = (CarComboItem) carComboBox.getSelectedItem();
+        final UserComboItem userItem = (UserComboItem) userComboBox.getSelectedItem();
+        final LocalDate rentDate = rentDatePicker.getSelectedDate();
+        final LocalDate returnDate = returnDatePicker.getSelectedDate();
+        final int staffId = 1; // TODO: replace with current logged-in staff id when available
+
+        BigDecimal rentAmount;
         try {
-            CarComboItem carItem = (CarComboItem) carComboBox.getSelectedItem();
-            UserComboItem userItem = (UserComboItem) userComboBox.getSelectedItem();
-            LocalDate rentDate = rentDatePicker.getSelectedDate();
-            LocalDate returnDate = returnDatePicker.getSelectedDate();
-            int staffId = 1; 
-            BigDecimal rentAmount = carService.calculateRent(carItem.getCar().getCarId(), rentDate, returnDate);
-            int result = JOptionPane.showConfirmDialog(this,
-                "确认租车信息:\n" +
-                "车辆: " + carItem.getCar().getLicensePlateNumber() + "\n" +
-                "用户: " + userItem.getUser().getName() + "\n" +
-                "租期: " + rentDate + " 至 " + returnDate + "\n" +
-                "租金: ¥" + rentAmount + "\n\n确定要租车吗？",
-                "确认租车", JOptionPane.YES_NO_OPTION);
-            if (result == JOptionPane.YES_OPTION) {
-                if (rentService.rentCar(carItem.getCar().getCarId(), userItem.getUser().getUserId(), staffId, rentDate, returnDate)) {
-                    JOptionPane.showMessageDialog(this, "租车成功", "提示", JOptionPane.INFORMATION_MESSAGE);
-                    parentPanel.refreshData();
-                    dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "租车失败", "错误", JOptionPane.ERROR_MESSAGE);
+            rentAmount = carService.calculateRent(carItem.getCar().getCarId(), rentDate, returnDate);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "计算租金失败: " + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int result = JOptionPane.showConfirmDialog(this,
+            "确认租车信息:\n" +
+            "车辆: " + carItem.getCar().getLicensePlateNumber() + "\n" +
+            "用户: " + userItem.getUser().getName() + "\n" +
+            "租期: " + rentDate + " 至 " + returnDate + "\n" +
+            "租金: ¥" + rentAmount + "\n\n确定要租车吗？",
+            "确认租车", JOptionPane.YES_NO_OPTION);
+
+        if (result == JOptionPane.YES_OPTION) {
+            // perform rent operation in background
+            rentButton.setEnabled(false);
+            SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
+                @Override
+                protected Boolean doInBackground() throws Exception {
+                    return rentService.rentCar(carItem.getCar().getCarId(), userItem.getUser().getUserId(), staffId, rentDate, returnDate);
                 }
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "租车失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+
+                @Override
+                protected void done() {
+                    try {
+                        Boolean ok = get();
+                        if (ok) {
+                            JOptionPane.showMessageDialog(RentCarDialog.this, "租车成功", "提示", JOptionPane.INFORMATION_MESSAGE);
+                            parentPanel.refreshData();
+                            dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(RentCarDialog.this, "租车失败", "错误", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(RentCarDialog.this, "租车失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                    } finally {
+                        rentButton.setEnabled(true);
+                    }
+                }
+            };
+            worker.execute();
         }
     }
 

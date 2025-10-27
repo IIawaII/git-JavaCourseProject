@@ -101,24 +101,60 @@ public class StaffDialog extends JDialog {
         if (nameField.getText().trim().isEmpty()) { showError("请输入姓名"); return; }
         if (phoneField.getText().trim().isEmpty()) { showError("请输入电话"); return; }
         if (!entryDatePicker.isValidDate()) { showError("请选择入职日期"); return; }
-        int role = 2;
-        try { role = Integer.parseInt(roleField.getText().trim()); } catch (Exception ignored) {}
+    int parsedRole = 2;
+    try { parsedRole = Integer.parseInt(roleField.getText().trim()); } catch (Exception ignored) {}
+    final int role = parsedRole;
+        // 将保存操作放到后台线程，避免阻塞 EDT
+        saveButton.setEnabled(false);
+        SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
+            private Exception error = null;
 
-        try {
-            Staff s = staff == null ? new Staff() : staff;
-            s.setName(nameField.getText().trim());
-            s.setPhone(phoneField.getText().trim());
-            s.setEntryDate(entryDatePicker.getSelectedDate());
-            s.setPosition((String) positionComboBox.getSelectedItem());
-            s.setRole(role);
+            @Override
+            protected Boolean doInBackground() throws Exception {
+                try {
+                    Staff s = staff == null ? new Staff() : staff;
+                    s.setName(nameField.getText().trim());
+                    s.setPhone(phoneField.getText().trim());
+                    s.setEntryDate(entryDatePicker.getSelectedDate());
+                    s.setPosition((String) positionComboBox.getSelectedItem());
+                    s.setRole(role);
+                    // 如果是新员工且未设置密码，则设置一个默认初始密码（管理员可后续更改）
+                    if (staff == null) {
+                        if (s.getPassword() == null || s.getPassword().trim().isEmpty()) {
+                            s.setPassword("123456");
+                        }
+                    }
 
-            boolean success = (staff == null) ? userService.addStaff(s) : userService.updateStaff(s);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "保存成功", "提示", JOptionPane.INFORMATION_MESSAGE);
-                parentPanel.refreshData();
-                dispose();
-            } else showError("保存失败，请检查输入或数据库连接");
-        } catch (Exception ex) { showError("保存失败: " + ex.getMessage()); }
+                    return (staff == null) ? userService.addStaff(s) : userService.updateStaff(s);
+                } catch (Exception ex) {
+                    this.error = ex;
+                    return false;
+                }
+            }
+
+            @Override
+            protected void done() {
+                saveButton.setEnabled(true);
+                try {
+                    boolean success = get();
+                    if (success) {
+                        JOptionPane.showMessageDialog(StaffDialog.this, "保存成功", "提示", JOptionPane.INFORMATION_MESSAGE);
+                        parentPanel.refreshData();
+                        dispose();
+                    } else {
+                        if (error != null) {
+                            showError("保存失败: " + error.getMessage());
+                        } else {
+                            showError("保存失败，请检查输入或数据库连接");
+                        }
+                    }
+                } catch (Exception ex) {
+                    showError("保存失败: " + ex.getMessage());
+                }
+            }
+        };
+
+        worker.execute();
     }
 
     private void showError(String msg) { JOptionPane.showMessageDialog(this, msg, "错误", JOptionPane.ERROR_MESSAGE); }

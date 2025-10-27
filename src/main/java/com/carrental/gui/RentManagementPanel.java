@@ -20,9 +20,13 @@ public class RentManagementPanel extends JPanel {
     private JTable rentTable;
     private DefaultTableModel tableModel;
     private JComboBox<String> statusComboBox;
+    private com.carrental.service.CarService carService;
+    private com.carrental.service.UserService userService;
 
     public RentManagementPanel() {
         this.rentService = new RentService();
+        this.carService = new com.carrental.service.CarService();
+        this.userService = new com.carrental.service.UserService();
         initializeComponents();
         setupLayout();
         setupEventHandlers();
@@ -34,7 +38,7 @@ public class RentManagementPanel extends JPanel {
      */
     private void initializeComponents() {
         // 创建表格
-        String[] columnNames = {"ID", "车辆ID", "用户ID", "员工ID", "租借日期", "归还日期", "支付金额", "退还金额"};
+        String[] columnNames = {"ID", "车牌号", "用户名", "员工", "租借日期", "归还日期", "支付金额", "退还金额"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -46,11 +50,13 @@ public class RentManagementPanel extends JPanel {
         rentTable.setRowHeight(25);
         rentTable.getTableHeader().setFont(new Font("微软雅黑", Font.BOLD, 12));
         
-        // 设置列宽
-        rentTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-        rentTable.getColumnModel().getColumn(1).setPreferredWidth(60);
-        rentTable.getColumnModel().getColumn(2).setPreferredWidth(60);
-        rentTable.getColumnModel().getColumn(3).setPreferredWidth(60);
+    // 隐藏内部 ID 列（租赁ID）并隐藏数值型 ID 列，替换为车牌/用户名/员工名显示
+    rentTable.getColumnModel().getColumn(0).setMinWidth(0);
+    rentTable.getColumnModel().getColumn(0).setMaxWidth(0);
+    rentTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+    rentTable.getColumnModel().getColumn(1).setPreferredWidth(120);
+    rentTable.getColumnModel().getColumn(2).setPreferredWidth(120);
+    rentTable.getColumnModel().getColumn(3).setPreferredWidth(120);
         rentTable.getColumnModel().getColumn(4).setPreferredWidth(100);
         rentTable.getColumnModel().getColumn(5).setPreferredWidth(100);
         rentTable.getColumnModel().getColumn(6).setPreferredWidth(80);
@@ -189,11 +195,27 @@ public class RentManagementPanel extends JPanel {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         
         for (RentInformation rentInfo : rentInfos) {
+            String plate = "未知";
+            String userName = "未知";
+            String staffName = "未知";
+            try {
+                com.carrental.entity.Car c = carService.getCarById(rentInfo.getCarId());
+                if (c != null) plate = c.getLicensePlateNumber();
+            } catch (Exception ignored) {}
+            try {
+                com.carrental.entity.User u = userService.getUserById(rentInfo.getUserId());
+                if (u != null) userName = u.getName();
+            } catch (Exception ignored) {}
+            try {
+                com.carrental.entity.Staff s = userService.getStaffById(rentInfo.getStaffId());
+                if (s != null) staffName = s.getName();
+            } catch (Exception ignored) {}
+
             Object[] row = {
                 rentInfo.getRentId(),
-                rentInfo.getCarId(),
-                rentInfo.getUserId(),
-                rentInfo.getStaffId(),
+                plate,
+                userName,
+                staffName,
                 rentInfo.getRentDate() != null ? rentInfo.getRentDate().format(formatter) : "",
                 rentInfo.getReturnDate() != null ? rentInfo.getReturnDate().format(formatter) : "",
                 rentInfo.getPayTheAmount(),
@@ -225,11 +247,27 @@ public class RentManagementPanel extends JPanel {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         
         for (RentInformation rentInfo : rentInfos) {
+            String plate = "未知";
+            String userName = "未知";
+            String staffName = "未知";
+            try {
+                com.carrental.entity.Car c = carService.getCarById(rentInfo.getCarId());
+                if (c != null) plate = c.getLicensePlateNumber();
+            } catch (Exception ignored) {}
+            try {
+                com.carrental.entity.User u = userService.getUserById(rentInfo.getUserId());
+                if (u != null) userName = u.getName();
+            } catch (Exception ignored) {}
+            try {
+                com.carrental.entity.Staff s = userService.getStaffById(rentInfo.getStaffId());
+                if (s != null) staffName = s.getName();
+            } catch (Exception ignored) {}
+
             Object[] row = {
                 rentInfo.getRentId(),
-                rentInfo.getCarId(),
-                rentInfo.getUserId(),
-                rentInfo.getStaffId(),
+                plate,
+                userName,
+                staffName,
                 rentInfo.getRentDate() != null ? rentInfo.getRentDate().format(formatter) : "",
                 rentInfo.getReturnDate() != null ? rentInfo.getReturnDate().format(formatter) : "",
                 rentInfo.getPayTheAmount(),

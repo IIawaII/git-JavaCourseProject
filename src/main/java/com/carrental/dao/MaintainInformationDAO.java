@@ -2,6 +2,7 @@ package com.carrental.dao;
 
 import com.carrental.entity.MaintainInformation;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -41,8 +42,7 @@ public class MaintainInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加维修信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加维修信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -63,8 +63,7 @@ public class MaintainInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除维修信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除维修信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -92,8 +91,7 @@ public class MaintainInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新维修信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新维修信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -108,17 +106,15 @@ public class MaintainInformationDAO {
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setInt(1, maintainId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToMaintainInformation(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToMaintainInformation(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询维修信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询维修信息失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -137,15 +133,14 @@ public class MaintainInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, carId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                maintainList.add(mapResultSetToMaintainInformation(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    maintainList.add(mapResultSetToMaintainInformation(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据车辆ID查询维修信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据车辆ID查询维修信息失败: " + e.getMessage(), e);
         }
         
         return maintainList;
@@ -168,8 +163,7 @@ public class MaintainInformationDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("查询所有维修信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有维修信息失败: " + e.getMessage(), e);
         }
         
         return maintainList;
@@ -191,8 +185,7 @@ public class MaintainInformationDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("获取下一个维修ID失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("获取下一个维修ID失败: " + e.getMessage(), e);
         }
         
         return 1;

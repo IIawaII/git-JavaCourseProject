@@ -42,6 +42,10 @@ public class UserManagementPanel extends JPanel {
         userTable.setFont(new Font("微软雅黑", Font.PLAIN, 12));
         userTable.setRowHeight(24);
         userTable.getTableHeader().setFont(new Font("微软雅黑", Font.BOLD, 12));
+    // 隐藏ID列（模型保留ID以便内部使用）
+    userTable.getColumnModel().getColumn(0).setMinWidth(0);
+    userTable.getColumnModel().getColumn(0).setMaxWidth(0);
+    userTable.getColumnModel().getColumn(0).setPreferredWidth(0);
 
         searchField = new JTextField(15);
         searchField.setFont(new Font("微软雅黑", Font.PLAIN, 12));
@@ -120,46 +124,75 @@ public class UserManagementPanel extends JPanel {
     }
 
     private void loadUserData() {
+        // load user data in background to avoid blocking EDT
         tableModel.setRowCount(0);
-        List<User> users = userService.getAllUsers();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        SwingWorker<java.util.List<User>, Void> worker = new SwingWorker<java.util.List<User>, Void>() {
+            @Override
+            protected java.util.List<User> doInBackground() throws Exception {
+                return userService.getAllUsers();
+            }
 
-        for (User u : users) {
-            Object[] row = {
-                u.getUserId(),
-                u.getName(),
-                u.getIdentityId(),
-                u.getPhone(),
-                u.getRegisterDate() != null ? u.getRegisterDate().format(fmt) : "",
-                u.getMember(),
-                u.getJudge()
-            };
-            tableModel.addRow(row);
-        }
+            @Override
+            protected void done() {
+                try {
+                    java.util.List<User> users = get();
+                    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    tableModel.setRowCount(0);
+                    for (User u : users) {
+                        Object[] row = {
+                            u.getUserId(),
+                            u.getName(),
+                            u.getIdentityId(),
+                            u.getPhone(),
+                            u.getRegisterDate() != null ? u.getRegisterDate().format(fmt) : "",
+                            u.getMember(),
+                            u.getJudge()
+                        };
+                        tableModel.addRow(row);
+                    }
+                } catch (Exception e) {
+                    // 如果获取失败，保留空表并提示
+                    JOptionPane.showMessageDialog(UserManagementPanel.this, "加载用户数据失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void performSearch() {
         String text = searchField.getText().trim();
         String member = (String) memberComboBox.getSelectedItem();
         String judge = (String) judgeComboBox.getSelectedItem();
-
-        List<User> users = userService.getAllUsers();
-        users = users.stream()
-                .filter(u -> text.isEmpty() || u.getName().contains(text) || u.getIdentityId().contains(text) || u.getPhone().contains(text))
-                .filter(u -> member.equals("全部") || (u.getMember() != null && u.getMember().equals(member)))
-                .filter(u -> judge.equals("全部") || (u.getJudge() != null && u.getJudge().equals(judge)))
-                .collect(java.util.stream.Collectors.toList());
-
+        // perform search in background
         tableModel.setRowCount(0);
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        for (User u : users) {
-            Object[] row = {
-                u.getUserId(), u.getName(), u.getIdentityId(), u.getPhone(),
-                u.getRegisterDate() != null ? u.getRegisterDate().format(fmt) : "",
-                u.getMember(), u.getJudge()
-            };
-            tableModel.addRow(row);
-        }
+        SwingWorker<java.util.List<User>, Void> worker = new SwingWorker<java.util.List<User>, Void>() {
+            @Override
+            protected java.util.List<User> doInBackground() throws Exception {
+                java.util.List<User> users = userService.getAllUsers();
+                java.util.List<User> filtered = users.stream()
+                        .filter(u -> text.isEmpty() || u.getName().contains(text) || u.getIdentityId().contains(text) || u.getPhone().contains(text))
+                        .filter(u -> member.equals("全部") || (u.getMember() != null && u.getMember().equals(member)))
+                        .filter(u -> judge.equals("全部") || (u.getJudge() != null && u.getJudge().equals(judge)))
+                        .collect(java.util.stream.Collectors.toList());
+                return filtered;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    java.util.List<User> users = get();
+                    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    tableModel.setRowCount(0);
+                    for (User u : users) {
+                        Object[] row = {u.getUserId(), u.getName(), u.getIdentityId(), u.getPhone(), u.getRegisterDate() != null ? u.getRegisterDate().format(fmt) : "", u.getMember(), u.getJudge()};
+                        tableModel.addRow(row);
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(UserManagementPanel.this, "搜索用户失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void showAddUserDialog() {

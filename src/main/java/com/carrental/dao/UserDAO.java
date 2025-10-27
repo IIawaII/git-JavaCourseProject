@@ -2,6 +2,7 @@ package com.carrental.dao;
 
 import com.carrental.entity.User;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -40,8 +41,7 @@ public class UserDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加用户失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -62,8 +62,7 @@ public class UserDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除用户失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -91,8 +90,7 @@ public class UserDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新用户失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -109,15 +107,14 @@ public class UserDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToUser(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询用户失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -135,15 +132,14 @@ public class UserDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, identityId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToUser(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据身份证号查询用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据身份证号查询用户失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -166,8 +162,7 @@ public class UserDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("查询所有用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有用户失败: " + e.getMessage(), e);
         }
         
         return users;
@@ -186,15 +181,14 @@ public class UserDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, member);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                users.add(mapResultSetToUser(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapResultSetToUser(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据会员状态查询用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据会员状态查询用户失败: " + e.getMessage(), e);
         }
         
         return users;
@@ -213,15 +207,14 @@ public class UserDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, judge);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                users.add(mapResultSetToUser(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapResultSetToUser(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据信誉度查询用户失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据信誉度查询用户失败: " + e.getMessage(), e);
         }
         
         return users;

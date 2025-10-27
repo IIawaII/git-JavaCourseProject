@@ -2,6 +2,7 @@ package com.carrental.dao;
 
 import com.carrental.entity.Car;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -45,8 +46,7 @@ public class CarDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加车辆失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -67,8 +67,7 @@ public class CarDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除车辆失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -99,8 +98,7 @@ public class CarDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新车辆失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -115,17 +113,15 @@ public class CarDAO {
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setInt(1, carId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToCar(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToCar(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询车辆失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -148,8 +144,7 @@ public class CarDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("查询所有车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有车辆失败: " + e.getMessage(), e);
         }
         
         return cars;
@@ -166,17 +161,15 @@ public class CarDAO {
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setString(1, status);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                cars.add(mapResultSetToCar(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    cars.add(mapResultSetToCar(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据状态查询车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据状态查询车辆失败: " + e.getMessage(), e);
         }
         
         return cars;
@@ -193,20 +186,36 @@ public class CarDAO {
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setString(1, brand);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                cars.add(mapResultSetToCar(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    cars.add(mapResultSetToCar(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据品牌查询车辆失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据品牌查询车辆失败: " + e.getMessage(), e);
         }
         
         return cars;
+    }
+
+    /**
+     * 获取下一个可用的 car_id（使用 MAX+1 策略）
+     * @return 下一个 car_id
+     */
+    public int getNextCarId() {
+        String sql = "SELECT COALESCE(MAX(car_id), 0) + 1 AS next_id FROM car";
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("next_id");
+            }
+        } catch (SQLException e) {
+            AppLogger.logException("获取下一个车辆ID失败: " + e.getMessage(), e);
+        }
+        return 1;
     }
 
     /**
@@ -228,8 +237,7 @@ public class CarDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新车辆状态失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新车辆状态失败: " + e.getMessage(), e);
             return false;
         }
     }

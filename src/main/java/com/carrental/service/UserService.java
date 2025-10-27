@@ -2,6 +2,7 @@ package com.carrental.service;
 
 import com.carrental.dao.StaffDAO;
 import com.carrental.dao.UserDAO;
+import com.carrental.util.AppLogger;
 import com.carrental.entity.Staff;
 import com.carrental.entity.User;
 
@@ -15,6 +16,8 @@ import java.util.List;
 public class UserService {
     private StaffDAO staffDAO;
     private UserDAO userDAO;
+    // 标记上一次登录是否因为被其他设备占用了锁
+    private boolean lastLoginBlocked = false;
 
     public UserService() {
         this.staffDAO = new StaffDAO();
@@ -29,17 +32,28 @@ public class UserService {
      */
     public Staff login(String name, String password) {
         if (name == null || name.trim().isEmpty()) {
-            System.err.println("用户名不能为空");
+            AppLogger.warn("用户名不能为空");
             return null;
         }
         
         if (password == null || password.trim().isEmpty()) {
-            System.err.println("密码不能为空");
+            AppLogger.warn("密码不能为空");
             return null;
         }
         
         // 直接执行登录验证，利用MySQL的锁机制
-        return staffDAO.login(name.trim(), password.trim());
+        Staff staff = staffDAO.login(name.trim(), password.trim());
+        // 记录是否因为锁而被阻塞
+        this.lastLoginBlocked = staffDAO.wasLastLoginBlockedByLock();
+        return staff;
+    }
+
+    /**
+     * 返回上一次登录是否因为锁被其他会话占用而被阻塞
+     * @return true 表示上一次登录尝试被阻塞
+     */
+    public boolean wasLastLoginBlocked() {
+        return this.lastLoginBlocked;
     }
     
     /**
@@ -49,7 +63,7 @@ public class UserService {
      */
     public boolean logout(String name) {
         if (name == null || name.trim().isEmpty()) {
-            System.err.println("用户名不能为空");
+            AppLogger.warn("用户名不能为空");
             return false;
         }
         
@@ -130,7 +144,7 @@ public class UserService {
         // 检查身份证号是否已存在
         User existingUser = userDAO.getUserByIdentityId(user.getIdentityId());
         if (existingUser != null) {
-            System.err.println("身份证号已存在");
+            AppLogger.warn("身份证号已存在");
             return false;
         }
         
@@ -210,32 +224,32 @@ public class UserService {
      */
     private boolean validateStaff(Staff staff) {
         if (staff.getName() == null || staff.getName().trim().isEmpty()) {
-            System.err.println("员工姓名不能为空");
+            AppLogger.warn("员工姓名不能为空");
             return false;
         }
         
         if (staff.getPhone() == null || staff.getPhone().trim().isEmpty()) {
-            System.err.println("联系电话不能为空");
+            AppLogger.warn("联系电话不能为空");
             return false;
         }
         
         if (staff.getPosition() == null || staff.getPosition().trim().isEmpty()) {
-            System.err.println("职位不能为空");
+            AppLogger.warn("职位不能为空");
             return false;
         }
         
         if (staff.getPassword() == null || staff.getPassword().trim().isEmpty()) {
-            System.err.println("密码不能为空");
+            AppLogger.warn("密码不能为空");
             return false;
         }
         
         if (staff.getEntryDate() == null || staff.getEntryDate().isAfter(LocalDate.now())) {
-            System.err.println("入职日期不能为空或晚于当前日期");
+            AppLogger.warn("入职日期不能为空或晚于当前日期");
             return false;
         }
         
         if (staff.getRole() < 1 || staff.getRole() > 9) {
-            System.err.println("权限等级必须在1-9之间");
+            AppLogger.warn("权限等级必须在1-9之间");
             return false;
         }
         
@@ -249,27 +263,27 @@ public class UserService {
      */
     private boolean validateUser(User user) {
         if (user.getName() == null || user.getName().trim().isEmpty()) {
-            System.err.println("用户姓名不能为空");
+            AppLogger.warn("用户姓名不能为空");
             return false;
         }
         
         if (user.getIdentityId() == null || user.getIdentityId().trim().isEmpty()) {
-            System.err.println("身份证号不能为空");
+            AppLogger.warn("身份证号不能为空");
             return false;
         }
         
         if (user.getIdentityId().length() != 18) {
-            System.err.println("身份证号必须为18位");
+            AppLogger.warn("身份证号必须为18位");
             return false;
         }
         
         if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
-            System.err.println("联系电话不能为空");
+            AppLogger.warn("联系电话不能为空");
             return false;
         }
         
         if (user.getRegisterDate() == null || user.getRegisterDate().isAfter(LocalDate.now())) {
-            System.err.println("注册日期不能为空或晚于当前日期");
+            AppLogger.warn("注册日期不能为空或晚于当前日期");
             return false;
         }
         

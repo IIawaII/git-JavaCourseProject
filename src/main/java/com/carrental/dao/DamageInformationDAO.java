@@ -2,6 +2,7 @@ package com.carrental.dao;
 
 import com.carrental.entity.DamageInformation;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -39,8 +40,7 @@ public class DamageInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加损坏信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -61,8 +61,7 @@ public class DamageInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除损坏信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -89,8 +88,7 @@ public class DamageInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新损坏信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -105,17 +103,15 @@ public class DamageInformationDAO {
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setInt(1, damageId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToDamageInformation(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToDamageInformation(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询损坏信息失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -134,15 +130,14 @@ public class DamageInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, carId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                damageList.add(mapResultSetToDamageInformation(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    damageList.add(mapResultSetToDamageInformation(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据车辆ID查询损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据车辆ID查询损坏信息失败: " + e.getMessage(), e);
         }
         
         return damageList;
@@ -165,8 +160,7 @@ public class DamageInformationDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("查询所有损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有损坏信息失败: " + e.getMessage(), e);
         }
         
         return damageList;
@@ -185,15 +179,14 @@ public class DamageInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, damageState);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                damageList.add(mapResultSetToDamageInformation(rs));
-            }
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        damageList.add(mapResultSetToDamageInformation(rs));
+                    }
+                }
             
         } catch (SQLException e) {
-            System.err.println("根据维修状态查询损坏信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据维修状态查询损坏信息失败: " + e.getMessage(), e);
         }
         
         return damageList;

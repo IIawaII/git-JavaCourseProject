@@ -2,6 +2,8 @@ package com.carrental.dao;
 
 import com.carrental.entity.Staff;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
+import com.carrental.util.SessionLockManager;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,6 +15,8 @@ import java.util.List;
  */
 public class StaffDAO {
     private DatabaseConnection dbConnection;
+    // 标记上一次登录尝试是否因为已被其它会话占用锁而被阻塞
+    private boolean lastLoginBlockedByLock = false;
 
     public StaffDAO() {
         this.dbConnection = DatabaseConnection.getInstance();
@@ -26,169 +30,57 @@ public class StaffDAO {
      * @return 员工对象，登录失败返回null
      */
     public Staff login(String name, String password) {
-        String lockName = "staff_login_lock_" + name;
-        String sql = "SELECT * FROM staff WHERE name = ? AND password = ?";
-        
+        // reset last-login blocked flag
+        this.lastLoginBlockedByLock = false;
+
+        // 使用原子性 UPDATE 来翻转 role（仅当 role >= 0 时），以防止并发登录的竞态条件
+        String updateSql = "UPDATE staff SET role = -ABS(role) WHERE name = ? AND password = ? AND role >= 0";
+        String checkLoggedSql = "SELECT COUNT(*) FROM staff WHERE name = ? AND role < 0";
+        String selectSql = "SELECT * FROM staff WHERE name = ? AND password = ?";
+
         try (Connection conn = dbConnection.getConnection()) {
-            // 设置连接为手动提交模式，确保锁的原子性
-            conn.setAutoCommit(false);
-            
-            try {
-                // 尝试获取MySQL锁，超时时间为5秒
-                if (acquireLock(conn, lockName, 5)) {
-                    return performLoginWithLock(conn, lockName, name, password, sql);
-                } else {
-                    // 无法获取锁时，尝试自动恢复异常状态
-                    try {
-                        autoResetAbnormalState(conn, name);
-                        // 重新尝试获取锁
-                        if (acquireLock(conn, lockName, 2)) {
-                            // 重新执行登录流程
-                            return performLoginWithLock(conn, lockName, name, password, sql);
+            try (PreparedStatement up = conn.prepareStatement(updateSql)) {
+                up.setString(1, name);
+                up.setString(2, password);
+                int updated = up.executeUpdate();
+                if (updated == 0) {
+                    // 没有更新，可能是用户名/密码错误或已被标记为已登录
+                    try (PreparedStatement chk = conn.prepareStatement(checkLoggedSql)) {
+                        chk.setString(1, name);
+                        try (ResultSet rs = chk.executeQuery()) {
+                            if (rs.next() && rs.getInt(1) > 0) {
+                                this.lastLoginBlockedByLock = true;
+                                return null;
+                            }
                         }
-                    } catch (SQLException e) {
-                        // 忽略自动恢复过程中的异常
                     }
                     return null;
                 }
-                
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
+
+                // 更新成功，查询并返回员工信息
+                try (PreparedStatement sel = conn.prepareStatement(selectSql)) {
+                    sel.setString(1, name);
+                    sel.setString(2, password);
+                    try (ResultSet rs = sel.executeQuery()) {
+                        if (rs.next()) {
+                            return mapResultSetToStaff(rs);
+                        }
+                    }
+                }
             }
-            
         } catch (SQLException e) {
-            System.err.println("员工登录验证失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("员工登录验证失败: " + e.getMessage(), e);
         }
-        
+
         return null;
     }
     
     /**
-     * 获取MySQL锁
-     * @param conn 数据库连接
-     * @param lockName 锁名称
-     * @param timeout 超时时间（秒）
-     * @return 是否成功获取锁
-     * @throws SQLException SQL异常
+     * 查询上一次登录尝试是否因为锁被占用而被阻塞
+     * @return true 表示上次尝试因锁被占用被阻塞
      */
-    private boolean acquireLock(Connection conn, String lockName, int timeout) throws SQLException {
-        String sql = "SELECT GET_LOCK(?, ?)";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, lockName);
-            pstmt.setInt(2, timeout);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) == 1;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * 释放MySQL锁
-     * @param conn 数据库连接
-     * @param lockName 锁名称
-     * @throws SQLException SQL异常
-     */
-    private void releaseLock(Connection conn, String lockName) throws SQLException {
-        String sql = "SELECT RELEASE_LOCK(?)";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, lockName);
-            pstmt.executeQuery();
-        }
-    }
-    
-    /**
-     * 检查员工是否已经登录
-     * 使用staff表的role字段作为登录状态标记（临时方案）
-     * @param conn 数据库连接
-     * @param name 员工姓名
-     * @return 是否已登录
-     * @throws SQLException SQL异常
-     */
-    private boolean isStaffAlreadyLoggedIn(Connection conn, String name) throws SQLException {
-        // 由于不能修改表结构，我们使用一个临时方案：
-        // 在staff表中添加一个is_logged_in字段来标记登录状态
-        // 但根据要求不能修改表结构，所以我们使用role字段的符号位来标记
-        // 这里我们使用一个更简单的方法：检查是否存在活跃的登录会话
-        String sql = "SELECT COUNT(*) FROM staff WHERE name = ? AND role < 0";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, name);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * 自动重置异常状态
-     * 在检测到异常登录状态时自动重置，确保系统健壮性
-     * @param conn 数据库连接
-     * @param name 员工姓名
-     * @throws SQLException SQL异常
-     */
-    private void autoResetAbnormalState(Connection conn, String name) throws SQLException {
-        // 检查是否存在MySQL锁，如果不存在说明之前的会话已断开
-        String lockName = "staff_login_lock_" + name;
-        String checkLockSql = "SELECT IS_USED_LOCK(?)";
-        
-        try (PreparedStatement pstmt = conn.prepareStatement(checkLockSql)) {
-            pstmt.setString(1, lockName);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                // 如果锁不存在（返回NULL），说明之前的会话已断开，可以安全重置
-                if (rs.getObject(1) == null) {
-                    markStaffAsLoggedOut(conn, name);
-                }
-            }
-        }
-    }
-    
-    /**
-     * 在已获取锁的情况下执行登录流程
-     * @param conn 数据库连接
-     * @param lockName 锁名称
-     * @param name 员工姓名
-     * @param password 密码
-     * @param sql 查询SQL
-     * @return 员工对象，登录失败返回null
-     * @throws SQLException SQL异常
-     */
-    private Staff performLoginWithLock(Connection conn, String lockName, String name, String password, String sql) throws SQLException {
-        try {
-            // 检查是否已有其他用户登录
-            if (isStaffAlreadyLoggedIn(conn, name)) {
-                // 自动重置异常状态，确保系统健壮性
-                autoResetAbnormalState(conn, name);
-            }
-            
-            // 执行登录验证
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, name);
-                pstmt.setString(2, password);
-                ResultSet rs = pstmt.executeQuery();
-                
-                if (rs.next()) {
-                    Staff staff = mapResultSetToStaff(rs);
-                    // 标记用户为已登录状态
-                    markStaffAsLoggedIn(conn, name);
-                    conn.commit();
-                    return staff;
-                }
-            }
-            
-            conn.commit();
-            return null;
-            
-        } finally {
-            // 释放锁
-            releaseLock(conn, lockName);
-        }
+    public boolean wasLastLoginBlockedByLock() {
+        return this.lastLoginBlockedByLock;
     }
     
     /**
@@ -243,8 +135,7 @@ public class StaffDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加员工失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加员工失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -265,8 +156,7 @@ public class StaffDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除员工失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除员工失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -294,8 +184,7 @@ public class StaffDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新员工失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新员工失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -312,15 +201,14 @@ public class StaffDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, staffId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToStaff(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToStaff(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询员工失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询员工失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -343,11 +231,47 @@ public class StaffDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("查询所有员工失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有员工失败: " + e.getMessage(), e);
         }
         
         return staffList;
+    }
+
+    /**
+     * 清理陈旧的登录标记：扫描 staff 表中 role < 0 的记录，检查对应的会话锁是否依然存在；
+     * 若锁不存在则认为之前的会话已断开，恢复该用户为登出状态。
+     * 该方法可在应用启动时调用以纠正异常断开的会话遗留状态。
+     */
+    public void cleanupStaleLogins() {
+        String sql = "SELECT name FROM staff WHERE role < 0";
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String lockName = "staff_session_lock_" + name;
+                try (PreparedStatement check = conn.prepareStatement("SELECT IS_USED_LOCK(?)")) {
+                    check.setString(1, lockName);
+                    try (ResultSet crs = check.executeQuery()) {
+                        if (crs.next()) {
+                            // 若返回 NULL，表示锁不存在，需重置登录标记
+                            if (crs.getObject(1) == null) {
+                                try (Connection uconn = dbConnection.getConnection()) {
+                                    uconn.setAutoCommit(false);
+                                    markStaffAsLoggedOut(uconn, name);
+                                    uconn.commit();
+                                    AppLogger.info("已清理陈旧登录标记: " + name);
+                                } catch (SQLException ex) {
+                                    AppLogger.logException("清理陈旧登录标记失败: " + ex.getMessage(), ex);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            AppLogger.logException("扫描陈旧登录失败: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -363,15 +287,14 @@ public class StaffDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, position);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                staffList.add(mapResultSetToStaff(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    staffList.add(mapResultSetToStaff(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据职位查询员工失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据职位查询员工失败: " + e.getMessage(), e);
         }
         
         return staffList;
@@ -384,37 +307,31 @@ public class StaffDAO {
      * @return 是否登出成功
      */
     public boolean logout(String name) {
-        String lockName = "staff_logout_lock_" + name;
-        
+        boolean dbOk = false;
         try (Connection conn = dbConnection.getConnection()) {
             conn.setAutoCommit(false);
-            
             try {
-                // 获取锁
-                if (acquireLock(conn, lockName, 5)) {
-                    try {
-                        // 标记为已登出
-                        markStaffAsLoggedOut(conn, name);
-                        conn.commit();
-                        return true;
-                    } finally {
-                        releaseLock(conn, lockName);
-                    }
-                } else {
-                    System.err.println("无法获取登出锁");
-                    return false;
-                }
-                
+                // 标记为已登出（恢复 role 正数）
+                markStaffAsLoggedOut(conn, name);
+                conn.commit();
+                dbOk = true;
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
             }
-            
         } catch (SQLException e) {
-            System.err.println("员工登出失败: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+            AppLogger.logException("员工登出失败: " + e.getMessage(), e);
+            dbOk = false;
         }
+
+        // 释放会话锁（如果有的话）
+        try {
+            SessionLockManager.getInstance().releaseSessionLock(name);
+        } catch (Exception e) {
+            AppLogger.logException("释放会话锁时出错: " + e.getMessage(), e);
+        }
+
+        return dbOk;
     }
     
     /**

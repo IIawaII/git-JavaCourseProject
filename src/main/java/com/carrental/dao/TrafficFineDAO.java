@@ -2,6 +2,7 @@ package com.carrental.dao;
 
 import com.carrental.entity.TrafficFine;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -40,8 +41,7 @@ public class TrafficFineDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加违章罚款失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -62,8 +62,7 @@ public class TrafficFineDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除违章罚款失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -91,8 +90,7 @@ public class TrafficFineDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新违章罚款失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -109,15 +107,14 @@ public class TrafficFineDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, fineId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToTrafficFine(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToTrafficFine(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询违章罚款失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -136,15 +133,14 @@ public class TrafficFineDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, carId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                fineList.add(mapResultSetToTrafficFine(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    fineList.add(mapResultSetToTrafficFine(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据车辆ID查询违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据车辆ID查询违章罚款失败: " + e.getMessage(), e);
         }
         
         return fineList;
@@ -163,15 +159,14 @@ public class TrafficFineDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                fineList.add(mapResultSetToTrafficFine(rs));
-            }
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        fineList.add(mapResultSetToTrafficFine(rs));
+                    }
+                }
             
         } catch (SQLException e) {
-            System.err.println("根据用户ID查询违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据用户ID查询违章罚款失败: " + e.getMessage(), e);
         }
         
         return fineList;
@@ -187,15 +182,13 @@ public class TrafficFineDAO {
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            
-            while (rs.next()) {
-                fineList.add(mapResultSetToTrafficFine(rs));
-            }
+                 ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    fineList.add(mapResultSetToTrafficFine(rs));
+                }
             
         } catch (SQLException e) {
-            System.err.println("查询所有违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有违章罚款失败: " + e.getMessage(), e);
         }
         
         return fineList;
@@ -214,15 +207,14 @@ public class TrafficFineDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, fineState);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                fineList.add(mapResultSetToTrafficFine(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    fineList.add(mapResultSetToTrafficFine(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据罚款状态查询违章罚款失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据罚款状态查询违章罚款失败: " + e.getMessage(), e);
         }
         
         return fineList;

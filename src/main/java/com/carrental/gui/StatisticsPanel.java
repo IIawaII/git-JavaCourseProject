@@ -81,34 +81,57 @@ public class StatisticsPanel extends JPanel {
      * 加载统计数据
      */
     private void loadStatistics() {
-        String selectedType = (String) reportTypeCombo.getSelectedItem();
-        StringBuilder statistics = new StringBuilder();
-        
-        statistics.append("=== 汽车租赁管理系统 - 数据统计报告 ===\n");
-        statistics.append("生成时间: ").append(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy年MM月dd日"))).append("\n\n");
-        
-        switch (selectedType) {
-            case "全部统计":
-                loadAllStatistics(statistics);
-                break;
-            case "车辆统计":
-                loadCarStatistics(statistics);
-                break;
-            case "用户统计":
-                loadUserStatistics(statistics);
-                break;
-            case "员工统计":
-                loadStaffStatistics(statistics);
-                break;
-            case "租车统计":
-                loadRentStatistics(statistics);
-                break;
-            case "财务统计":
-                loadFinancialStatistics(statistics);
-                break;
-        }
-        
-        statisticsArea.setText(statistics.toString());
+        // 使用 SwingWorker 在后台加载统计，避免阻塞 EDT
+        final String selectedType = (String) reportTypeCombo.getSelectedItem();
+        refreshButton.setEnabled(false);
+        reportTypeCombo.setEnabled(false);
+
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                StringBuilder statistics = new StringBuilder();
+                statistics.append("=== 汽车租赁管理系统 - 数据统计报告 ===\n");
+                statistics.append("生成时间: ").append(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy年MM月dd日"))).append("\n\n");
+
+                switch (selectedType) {
+                    case "全部统计":
+                        loadAllStatistics(statistics);
+                        break;
+                    case "车辆统计":
+                        loadCarStatistics(statistics);
+                        break;
+                    case "用户统计":
+                        loadUserStatistics(statistics);
+                        break;
+                    case "员工统计":
+                        loadStaffStatistics(statistics);
+                        break;
+                    case "租车统计":
+                        loadRentStatistics(statistics);
+                        break;
+                    case "财务统计":
+                        loadFinancialStatistics(statistics);
+                        break;
+                }
+
+                return statistics.toString();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    String result = get();
+                    statisticsArea.setText(result);
+                } catch (Exception e) {
+                    statisticsArea.setText("加载统计失败: " + e.getMessage());
+                } finally {
+                    refreshButton.setEnabled(true);
+                    reportTypeCombo.setEnabled(true);
+                }
+            }
+        };
+
+        worker.execute();
     }
 
     /**

@@ -26,6 +26,13 @@ public class CarRentalSystem {
             LOGGER.log(Level.WARNING, "设置外观失败: " + e.getMessage(), e);
         }
         
+        // 在应用启动时清理由于异常断开导致的陈旧登录状态
+        try {
+            new com.carrental.dao.StaffDAO().cleanupStaleLogins();
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "清理陈旧登录时出错: " + e.getMessage(), e);
+        }
+
         // 在事件分发线程中启动GUI
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             @Override

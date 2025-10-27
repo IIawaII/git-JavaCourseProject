@@ -48,8 +48,10 @@ public class CarManagementPanel extends JPanel {
         carTable.setRowHeight(25);
         carTable.getTableHeader().setFont(new Font("微软雅黑", Font.BOLD, 12));
         
-        // 设置列宽
-        carTable.getColumnModel().getColumn(0).setPreferredWidth(50);
+    // 隐藏 ID 列（不在界面显示），但保留在模型中以便内部使用
+    carTable.getColumnModel().getColumn(0).setMinWidth(0);
+    carTable.getColumnModel().getColumn(0).setMaxWidth(0);
+    carTable.getColumnModel().getColumn(0).setPreferredWidth(0);
         carTable.getColumnModel().getColumn(1).setPreferredWidth(120);
         carTable.getColumnModel().getColumn(2).setPreferredWidth(80);
         carTable.getColumnModel().getColumn(3).setPreferredWidth(80);

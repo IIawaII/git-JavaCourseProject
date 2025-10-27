@@ -2,6 +2,7 @@ package com.carrental.dao;
 
 import com.carrental.entity.RentInformation;
 import com.carrental.util.DatabaseConnection;
+import com.carrental.util.AppLogger;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -43,8 +44,7 @@ public class RentInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("添加租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("添加租车信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -65,8 +65,7 @@ public class RentInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("删除租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("删除租车信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -95,8 +94,7 @@ public class RentInformationDAO {
             return result > 0;
             
         } catch (SQLException e) {
-            System.err.println("更新租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("更新租车信息失败: " + e.getMessage(), e);
             return false;
         }
     }
@@ -113,15 +111,14 @@ public class RentInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, rentId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToRentInformation(rs);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToRentInformation(rs);
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("查询租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询租车信息失败: " + e.getMessage(), e);
         }
         
         return null;
@@ -144,8 +141,7 @@ public class RentInformationDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("查询所有租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("查询所有租车信息失败: " + e.getMessage(), e);
         }
         
         return rentInfoList;
@@ -164,15 +160,14 @@ public class RentInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, carId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                rentInfoList.add(mapResultSetToRentInformation(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    rentInfoList.add(mapResultSetToRentInformation(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据车辆ID查询租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据车辆ID查询租车信息失败: " + e.getMessage(), e);
         }
         
         return rentInfoList;
@@ -191,15 +186,14 @@ public class RentInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                rentInfoList.add(mapResultSetToRentInformation(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    rentInfoList.add(mapResultSetToRentInformation(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据用户ID查询租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据用户ID查询租车信息失败: " + e.getMessage(), e);
         }
         
         return rentInfoList;
@@ -218,15 +212,14 @@ public class RentInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, staffId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                rentInfoList.add(mapResultSetToRentInformation(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    rentInfoList.add(mapResultSetToRentInformation(rs));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("根据员工ID查询租车信息失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("根据员工ID查询租车信息失败: " + e.getMessage(), e);
         }
         
         return rentInfoList;
@@ -246,17 +239,16 @@ public class RentInformationDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, carId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                BigDecimal dailyRent = rs.getBigDecimal("rent");
-                long days = java.time.temporal.ChronoUnit.DAYS.between(rentDate, returnDate);
-                return dailyRent.multiply(BigDecimal.valueOf(days));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal dailyRent = rs.getBigDecimal("rent");
+                    long days = java.time.temporal.ChronoUnit.DAYS.between(rentDate, returnDate);
+                    return dailyRent.multiply(BigDecimal.valueOf(days));
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("计算租金失败: " + e.getMessage());
-            e.printStackTrace();
+            AppLogger.logException("计算租金失败: " + e.getMessage(), e);
         }
         
         return BigDecimal.ZERO;

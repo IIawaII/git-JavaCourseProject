@@ -31,8 +31,8 @@ public class TrafficFineManagementPanel extends JPanel {
     private JButton deleteButton;
     private JButton refreshButton;
     private JComboBox<String> stateFilterCombo;
-    private JComboBox<String> carFilterCombo;
-    private JComboBox<String> userFilterCombo;
+    private JComboBox<Object> carFilterCombo;
+    private JComboBox<Object> userFilterCombo;
 
     public TrafficFineManagementPanel() {
         this.trafficFineDAO = new TrafficFineDAO();
@@ -59,6 +59,16 @@ public class TrafficFineManagementPanel extends JPanel {
         fineTable = new JTable(tableModel);
         fineTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fineTable.getTableHeader().setReorderingAllowed(false);
+    // 隐藏罚款ID、车辆ID和用户ID列（模型保留以便内部使用），显示车牌号和用户姓名
+    fineTable.getColumnModel().getColumn(0).setMinWidth(0);
+    fineTable.getColumnModel().getColumn(0).setMaxWidth(0);
+    fineTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+    fineTable.getColumnModel().getColumn(1).setMinWidth(0);
+    fineTable.getColumnModel().getColumn(1).setMaxWidth(0);
+    fineTable.getColumnModel().getColumn(1).setPreferredWidth(0);
+    fineTable.getColumnModel().getColumn(3).setMinWidth(0);
+    fineTable.getColumnModel().getColumn(3).setMaxWidth(0);
+    fineTable.getColumnModel().getColumn(3).setPreferredWidth(0);
 
         // 创建按钮
         addButton = new JButton("添加罚款记录");
@@ -70,9 +80,30 @@ public class TrafficFineManagementPanel extends JPanel {
         stateFilterCombo = new JComboBox<>(new String[]{"全部", "已交", "未交"});
         carFilterCombo = new JComboBox<>();
         carFilterCombo.addItem("全部车辆");
+        carFilterCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.Car) {
+                    setText(((com.carrental.entity.Car) value).getLicensePlateNumber());
+                }
+                return this;
+            }
+        });
+
         userFilterCombo = new JComboBox<>();
         userFilterCombo.addItem("全部用户");
-        
+        userFilterCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.User) {
+                    setText(((com.carrental.entity.User) value).getName());
+                }
+                return this;
+            }
+        });
+
         // 加载车辆和用户列表
         loadCarList();
         loadUserList();
@@ -84,7 +115,7 @@ public class TrafficFineManagementPanel extends JPanel {
     private void loadCarList() {
         List<Car> cars = carDAO.getAllCars();
         for (Car car : cars) {
-            carFilterCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
+            carFilterCombo.addItem(car);
         }
     }
 
@@ -94,7 +125,7 @@ public class TrafficFineManagementPanel extends JPanel {
     private void loadUserList() {
         List<User> users = userDAO.getAllUsers();
         for (User user : users) {
-            userFilterCombo.addItem(user.getName() + " (ID:" + user.getUserId() + ")");
+            userFilterCombo.addItem(user);
         }
     }
 
@@ -148,20 +179,20 @@ public class TrafficFineManagementPanel extends JPanel {
         tableModel.setRowCount(0);
         
         List<TrafficFine> fineList;
-        String selectedState = (String) stateFilterCombo.getSelectedItem();
-        String selectedCar = (String) carFilterCombo.getSelectedItem();
-        String selectedUser = (String) userFilterCombo.getSelectedItem();
+    String selectedState = (String) stateFilterCombo.getSelectedItem();
+    Object selectedCar = carFilterCombo.getSelectedItem();
+    Object selectedUser = userFilterCombo.getSelectedItem();
         
         if ("全部".equals(selectedState) && "全部车辆".equals(selectedCar) && "全部用户".equals(selectedUser)) {
             fineList = trafficFineDAO.getAllTrafficFine();
         } else {
-            // 需要实现组合筛选
-            fineList = trafficFineDAO.getAllTrafficFine();
-            fineList = fineList.stream()
-                    .filter(f -> "全部".equals(selectedState) || selectedState.equals(f.getFineState()))
-                    .filter(f -> "全部车辆".equals(selectedCar) || extractCarIdFromCombo(selectedCar) == f.getCarId())
-                    .filter(f -> "全部用户".equals(selectedUser) || extractUserIdFromCombo(selectedUser) == f.getUserId())
-                    .collect(java.util.stream.Collectors.toList());
+        // 需要实现组合筛选
+        fineList = trafficFineDAO.getAllTrafficFine();
+        fineList = fineList.stream()
+            .filter(f -> "全部".equals(selectedState) || selectedState.equals(f.getFineState()))
+            .filter(f -> (selectedCar instanceof String && "全部车辆".equals(selectedCar)) || (selectedCar instanceof Car && extractCarIdFromCombo(selectedCar) == f.getCarId()))
+            .filter(f -> (selectedUser instanceof String && "全部用户".equals(selectedUser)) || (selectedUser instanceof User && extractUserIdFromCombo(selectedUser) == f.getUserId()))
+            .collect(java.util.stream.Collectors.toList());
         }
         
         for (TrafficFine fine : fineList) {
@@ -188,11 +219,9 @@ public class TrafficFineManagementPanel extends JPanel {
     /**
      * 从下拉框文本中提取车辆ID
      */
-    private int extractCarIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractCarIdFromCombo(Object comboItem) {
+        if (comboItem instanceof Car) {
+            return ((Car) comboItem).getCarId();
         }
         return -1;
     }
@@ -200,11 +229,9 @@ public class TrafficFineManagementPanel extends JPanel {
     /**
      * 从下拉框文本中提取用户ID
      */
-    private int extractUserIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractUserIdFromCombo(Object comboItem) {
+        if (comboItem instanceof User) {
+            return ((User) comboItem).getUserId();
         }
         return -1;
     }

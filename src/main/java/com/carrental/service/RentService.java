@@ -4,6 +4,7 @@ import com.carrental.dao.RentInformationDAO;
 import com.carrental.dao.CarDAO;
 import com.carrental.dao.UserDAO;
 import com.carrental.dao.StaffDAO;
+import com.carrental.util.AppLogger;
 import com.carrental.entity.RentInformation;
 import com.carrental.entity.Car;
 import com.carrental.entity.User;
@@ -48,14 +49,14 @@ public class RentService {
         // 检查车辆是否可用
         Car car = carDAO.getCarById(carId);
         if (car == null || !"空闲".equals(car.getStatus())) {
-            System.err.println("车辆不可用");
+            AppLogger.warn("车辆不可用");
             return false;
         }
         
         // 计算租金
         BigDecimal rentAmount = rentInfoDAO.calculateRent(carId, rentDate, returnDate);
         if (rentAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            System.err.println("租金计算错误");
+            AppLogger.error("租金计算错误");
             return false;
         }
         
@@ -90,7 +91,7 @@ public class RentService {
     public boolean returnCar(int rentId, LocalDate actualReturnDate, BigDecimal damageCost) {
         RentInformation rentInfo = rentInfoDAO.getRentInformationById(rentId);
         if (rentInfo == null) {
-            System.err.println("租车信息不存在");
+            AppLogger.warn("租车信息不存在");
             return false;
         }
         
@@ -169,7 +170,7 @@ public class RentService {
      */
     public BigDecimal calculateRent(int carId, LocalDate rentDate, LocalDate returnDate) {
         if (rentDate.isAfter(returnDate)) {
-            System.err.println("租借日期不能晚于归还日期");
+            AppLogger.warn("租借日期不能晚于归还日期");
             return BigDecimal.ZERO;
         }
         
@@ -201,32 +202,32 @@ public class RentService {
         // 检查车辆是否存在
         Car car = carDAO.getCarById(carId);
         if (car == null) {
-            System.err.println("车辆不存在");
+            AppLogger.warn("车辆不存在");
             return false;
         }
         
         // 检查用户是否存在
         User user = userDAO.getUserById(userId);
         if (user == null) {
-            System.err.println("用户不存在");
+            AppLogger.warn("用户不存在");
             return false;
         }
         
         // 检查员工是否存在
         Staff staff = staffDAO.getStaffById(staffId);
         if (staff == null) {
-            System.err.println("员工不存在");
+            AppLogger.warn("员工不存在");
             return false;
         }
         
         // 检查日期
         if (rentDate.isBefore(LocalDate.now())) {
-            System.err.println("租借日期不能早于当前日期");
+            AppLogger.warn("租借日期不能早于当前日期");
             return false;
         }
-        
+
         if (rentDate.isAfter(returnDate)) {
-            System.err.println("租借日期不能晚于归还日期");
+            AppLogger.warn("租借日期不能晚于归还日期");
             return false;
         }
         

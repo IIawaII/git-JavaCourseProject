@@ -27,7 +27,6 @@ public class DatabaseConnection {
     private String password = PASSWORD;
     private String driver = DRIVER;
     private static DatabaseConnection instance;
-    private Connection connection;
     private boolean connectionFailed = false; // 标记连接是否失败
     private boolean initialized = false; // 标记是否已尝试初始化
 
@@ -44,18 +43,21 @@ public class DatabaseConnection {
     private void initializeConnection() {
         // 尝试从配置文件加载（若存在）
         loadConfigFromFile();
-
         try {
             Class.forName(driver);
-            this.connection = DriverManager.getConnection(url, username, password);
-            this.connectionFailed = false; // 连接成功，重置失败标记
+            // 尝试短暂建立一次连接以验证配置是否可用，然后立即关闭。
+            try (Connection testConn = DriverManager.getConnection(url, username, password)) {
+                this.connectionFailed = false;
+            } catch (SQLException se) {
+                System.err.println("初始化时无法建立测试连接: " + se.getMessage());
+                this.connectionFailed = true;
+            }
             this.initialized = true;
-        } catch (ClassNotFoundException | SQLException e) {
-            System.err.println("数据库连接失败: " + e.getMessage());
-            // 避免在生产环境输出大量堆栈，此处仅打印简要信息
+        } catch (ClassNotFoundException e) {
+            System.err.println("JDBC 驱动类未找到: " + e.getMessage());
             e.printStackTrace();
-            this.connectionFailed = true; // 标记连接失败
-            this.initialized = true; // 标记已尝试初始化
+            this.connectionFailed = true;
+            this.initialized = true;
         }
     }
 
@@ -99,42 +101,25 @@ public class DatabaseConnection {
             // 如果尚未初始化，先初始化连接
             initializeConnection();
         }
-        
+        // 每次都返回一个新的 Connection，调用者应负责关闭它（DAO 中已使用 try-with-resources）
         try {
-            // 如果连接失败过，尝试重新连接
-            if (connectionFailed || connection == null || connection.isClosed()) {
-                try {
-                    // 在重连时使用配置文件中的值（此前可能已加载）
-                    connection = DriverManager.getConnection(url, username, password);
-                    connectionFailed = false; // 重新连接成功，重置失败标记
-                } catch (SQLException e) {
-                    System.err.println("重新获取数据库连接失败: " + e.getMessage());
-                    e.printStackTrace();
-                    connectionFailed = true; // 标记连接失败
-                    throw e; // 抛出异常让调用者处理
-                }
-            }
+            Connection conn = DriverManager.getConnection(url, username, password);
+            connectionFailed = false;
+            return conn;
         } catch (SQLException e) {
-            System.err.println("检查数据库连接时出错: " + e.getMessage());
-            e.printStackTrace();
             connectionFailed = true;
+            System.err.println("获取数据库连接失败: " + e.getMessage());
+            e.printStackTrace();
             throw e;
         }
-        return connection;
     }
 
     /**
      * 关闭数据库连接
      */
     public void closeConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("关闭数据库连接失败: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // 不维护长期连接，关闭操作不需要处理具体连接。
+        // 保留方法以兼容现有调用（无操作）。
     }
 
     /**

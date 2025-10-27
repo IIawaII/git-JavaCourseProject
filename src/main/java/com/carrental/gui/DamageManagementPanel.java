@@ -27,7 +27,7 @@ public class DamageManagementPanel extends JPanel {
     private JButton deleteButton;
     private JButton refreshButton;
     private JComboBox<String> stateFilterCombo;
-    private JComboBox<String> carFilterCombo;
+    private JComboBox<Object> carFilterCombo;
 
     public DamageManagementPanel() {
         this.damageDAO = new DamageInformationDAO();
@@ -53,6 +53,13 @@ public class DamageManagementPanel extends JPanel {
         damageTable = new JTable(tableModel);
         damageTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         damageTable.getTableHeader().setReorderingAllowed(false);
+    // 隐藏损坏ID和车辆ID列（保留在模型中以便编辑/删除时使用）
+    damageTable.getColumnModel().getColumn(0).setMinWidth(0);
+    damageTable.getColumnModel().getColumn(0).setMaxWidth(0);
+    damageTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+    damageTable.getColumnModel().getColumn(1).setMinWidth(0);
+    damageTable.getColumnModel().getColumn(1).setMaxWidth(0);
+    damageTable.getColumnModel().getColumn(1).setPreferredWidth(0);
 
         // 创建按钮
         addButton = new JButton("添加损坏记录");
@@ -64,7 +71,17 @@ public class DamageManagementPanel extends JPanel {
         stateFilterCombo = new JComboBox<>(new String[]{"全部", "已维修", "未维修"});
         carFilterCombo = new JComboBox<>();
         carFilterCombo.addItem("全部车辆");
-        
+        carFilterCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.Car) {
+                    setText(((com.carrental.entity.Car) value).getLicensePlateNumber());
+                }
+                return this;
+            }
+        });
+
         // 加载车辆列表
         loadCarList();
     }
@@ -74,8 +91,9 @@ public class DamageManagementPanel extends JPanel {
      */
     private void loadCarList() {
         List<Car> cars = carDAO.getAllCars();
+        // 保持第一个是 "全部车辆"
         for (Car car : cars) {
-            carFilterCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
+            carFilterCombo.addItem(car);
         }
     }
 
@@ -126,14 +144,14 @@ public class DamageManagementPanel extends JPanel {
         tableModel.setRowCount(0);
         
         List<DamageInformation> damageList;
-        String selectedState = (String) stateFilterCombo.getSelectedItem();
-        String selectedCar = (String) carFilterCombo.getSelectedItem();
+    String selectedState = (String) stateFilterCombo.getSelectedItem();
+    Object selectedCar = carFilterCombo.getSelectedItem();
         
         if ("全部".equals(selectedState) && "全部车辆".equals(selectedCar)) {
             damageList = damageDAO.getAllDamageInformation();
         } else if (!"全部".equals(selectedState) && "全部车辆".equals(selectedCar)) {
             damageList = damageDAO.getDamageInformationByState(selectedState);
-        } else if ("全部".equals(selectedState) && !"全部车辆".equals(selectedCar)) {
+        } else if ("全部".equals(selectedState) && !(selectedCar instanceof String)) {
             int carId = extractCarIdFromCombo(selectedCar);
             damageList = damageDAO.getDamageInformationByCarId(carId);
         } else {
@@ -141,7 +159,7 @@ public class DamageManagementPanel extends JPanel {
             damageList = damageDAO.getAllDamageInformation();
             damageList = damageList.stream()
                     .filter(d -> "全部".equals(selectedState) || selectedState.equals(d.getDamageState()))
-                    .filter(d -> "全部车辆".equals(selectedCar) || extractCarIdFromCombo(selectedCar) == d.getCarId())
+                    .filter(d -> (selectedCar instanceof String && "全部车辆".equals(selectedCar)) || (selectedCar instanceof Car && extractCarIdFromCombo(selectedCar) == d.getCarId()))
                     .collect(java.util.stream.Collectors.toList());
         }
         
@@ -164,11 +182,9 @@ public class DamageManagementPanel extends JPanel {
     /**
      * 从下拉框文本中提取车辆ID
      */
-    private int extractCarIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractCarIdFromCombo(Object comboItem) {
+        if (comboItem instanceof Car) {
+            return ((Car) comboItem).getCarId();
         }
         return -1;
     }

@@ -15,7 +15,7 @@ import java.text.NumberFormat;
 public class CarDialog extends JDialog {
     private Car car;
     private CarService carService;
-    private JTextField carIdField, licensePlateField, brandField, modelField, colorField;
+    private JTextField licensePlateField, brandField, modelField, colorField;
     private JComboBox<String> statusComboBox;
     private JFormattedTextField rentField, depositField;
     private DatePicker purchaseDatePicker;
@@ -39,7 +39,6 @@ public class CarDialog extends JDialog {
     private void initComponents() {
         Font font = new Font(Font.DIALOG, Font.PLAIN, 12);
 
-        carIdField = new JTextField();
         licensePlateField = new JTextField();
         brandField = new JTextField();
         modelField = new JTextField();
@@ -78,8 +77,8 @@ public class CarDialog extends JDialog {
         gbc.insets = new Insets(5,5,5,5);
         gbc.anchor = GridBagConstraints.WEST;
 
-        String[] labels = {"车辆ID:", "车牌号:", "品牌:", "型号:", "颜色:", "状态:", "日租金:", "押金:", "购买日期:"};
-        Component[] components = {carIdField, licensePlateField, brandField, modelField, colorField, statusComboBox, rentField, depositField, purchaseDatePicker};
+    String[] labels = {"车牌号:", "品牌:", "型号:", "颜色:", "状态:", "日租金:", "押金:", "购买日期:"};
+    Component[] components = {licensePlateField, brandField, modelField, colorField, statusComboBox, rentField, depositField, purchaseDatePicker};
 
         for (int i = 0; i < labels.length; i++) {
             gbc.gridx = 0;
@@ -127,7 +126,6 @@ public class CarDialog extends JDialog {
 
     private void saveCar() {
         // 输入验证
-        if (carIdField.getText().trim().isEmpty()) {showError("请输入车辆ID"); return;}
         if (licensePlateField.getText().trim().isEmpty()) { showError("请输入车牌号"); return; }
         if (brandField.getText().trim().isEmpty()) { showError("请输入品牌"); return; }
         if (modelField.getText().trim().isEmpty()) { showError("请输入型号"); return; }
@@ -138,7 +136,10 @@ public class CarDialog extends JDialog {
 
         try {
             Car carToSave = car == null ? new Car() : car;
-            carToSave.setCarId(Integer.parseInt(carIdField.getText().trim()));
+            if (car == null) {
+                // 当添加时，自动生成一个 carId（避免在界面暴露 ID 字段）
+                carToSave.setCarId(carService.getNextCarId());
+            }
             carToSave.setLicensePlateNumber(licensePlateField.getText().trim());
             carToSave.setBrand(brandField.getText().trim());
             carToSave.setModel(modelField.getText().trim());

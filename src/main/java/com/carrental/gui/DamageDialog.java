@@ -21,7 +21,7 @@ public class DamageDialog extends JDialog {
     private List<Car> carList;
     private DamageInformationDAO damageDAO;
     
-    private JComboBox<String> carCombo;
+    private JComboBox<Object> carCombo;
     private JTextField damageDateField;
     private JTextArea damageDescribeArea;
     private JComboBox<String> damageStateCombo;
@@ -51,8 +51,18 @@ public class DamageDialog extends JDialog {
     private void initializeComponents() {
         // 车辆选择
         carCombo = new JComboBox<>();
+        carCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.Car) {
+                    setText(((com.carrental.entity.Car) value).getLicensePlateNumber());
+                }
+                return this;
+            }
+        });
         for (Car car : carList) {
-            carCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
+            carCombo.addItem(car);
         }
         
         // 损坏日期
@@ -142,8 +152,8 @@ public class DamageDialog extends JDialog {
         if (damageInfo != null) {
             // 设置车辆选择
             for (int i = 0; i < carCombo.getItemCount(); i++) {
-                String item = carCombo.getItemAt(i);
-                if (item.contains("(ID:" + damageInfo.getCarId() + ")")) {
+                Object item = carCombo.getItemAt(i);
+                if (item instanceof Car && ((Car) item).getCarId() == damageInfo.getCarId()) {
                     carCombo.setSelectedIndex(i);
                     break;
                 }
@@ -171,8 +181,8 @@ public class DamageDialog extends JDialog {
             }
             
             // 设置车辆ID
-            String selectedCar = (String) carCombo.getSelectedItem();
-            int carId = extractCarIdFromCombo(selectedCar);
+            Object selectedCarObj = carCombo.getSelectedItem();
+            int carId = extractCarIdFromCombo(selectedCarObj);
             newDamageInfo.setCarId(carId);
             
             // 设置其他字段
@@ -236,11 +246,9 @@ public class DamageDialog extends JDialog {
     /**
      * 从下拉框文本中提取车辆ID
      */
-    private int extractCarIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractCarIdFromCombo(Object comboItem) {
+        if (comboItem instanceof Car) {
+            return ((Car) comboItem).getCarId();
         }
         return -1;
     }

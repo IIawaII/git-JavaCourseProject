@@ -27,7 +27,7 @@ public class MaintainManagementPanel extends JPanel {
     private JButton editButton;
     private JButton deleteButton;
     private JButton refreshButton;
-    private JComboBox<String> carFilterCombo;
+    private JComboBox<Object> carFilterCombo;
 
     public MaintainManagementPanel() {
         this.maintainDAO = new MaintainInformationDAO();
@@ -63,7 +63,17 @@ public class MaintainManagementPanel extends JPanel {
         // 创建筛选组件
         carFilterCombo = new JComboBox<>();
         carFilterCombo.addItem("全部车辆");
-        
+        carFilterCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.carrental.entity.Car) {
+                    setText(((com.carrental.entity.Car) value).getLicensePlateNumber());
+                }
+                return this;
+            }
+        });
+
         // 加载车辆列表
         loadCarList();
     }
@@ -74,7 +84,7 @@ public class MaintainManagementPanel extends JPanel {
     private void loadCarList() {
         List<Car> cars = carDAO.getAllCars();
         for (Car car : cars) {
-            carFilterCombo.addItem(car.getLicensePlateNumber() + " (ID:" + car.getCarId() + ")");
+            carFilterCombo.addItem(car);
         }
     }
 
@@ -122,13 +132,15 @@ public class MaintainManagementPanel extends JPanel {
         tableModel.setRowCount(0);
         
         List<MaintainInformation> maintainList;
-        String selectedCar = (String) carFilterCombo.getSelectedItem();
-        
-        if ("全部车辆".equals(selectedCar)) {
+        Object selectedCar = carFilterCombo.getSelectedItem();
+
+        if (selectedCar instanceof String && "全部车辆".equals(selectedCar)) {
             maintainList = maintainDAO.getAllMaintainInformation();
-        } else {
+        } else if (selectedCar instanceof Car) {
             int carId = extractCarIdFromCombo(selectedCar);
             maintainList = maintainDAO.getMaintainInformationByCarId(carId);
+        } else {
+            maintainList = maintainDAO.getAllMaintainInformation();
         }
         
         for (MaintainInformation maintain : maintainList) {
@@ -152,11 +164,9 @@ public class MaintainManagementPanel extends JPanel {
     /**
      * 从下拉框文本中提取车辆ID
      */
-    private int extractCarIdFromCombo(String comboText) {
-        if (comboText.contains("(ID:")) {
-            String idPart = comboText.substring(comboText.indexOf("(ID:") + 4);
-            idPart = idPart.substring(0, idPart.indexOf(")"));
-            return Integer.parseInt(idPart);
+    private int extractCarIdFromCombo(Object comboItem) {
+        if (comboItem instanceof Car) {
+            return ((Car) comboItem).getCarId();
         }
         return -1;
     }

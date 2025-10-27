@@ -1,0 +1,18 @@
+十月 27, 2025 6:36:37 下午 com.carrental.util.AppLogger info
+信息: 尝试登录: super213
+十月 27, 2025 6:36:37 下午 com.carrental.util.AppLogger info
+信息: 登录成功: super213，保持 10 秒...
+十月 27, 2025 6:36:47 下午 com.carrental.util.AppLogger info
+信息: 已登出: super213 -> true
+十月 27, 2025 6:37:17 下午 com.carrental.util.AppLogger info
+信息: 尝试登录: super213
+十月 27, 2025 6:37:17 下午 com.carrental.util.AppLogger info
+信息: 登录成功: super213，保持 15 秒...
+十月 27, 2025 6:37:32 下午 com.carrental.util.AppLogger info
+信息: 已登出: super213 -> true
+十月 27, 2025 6:37:54 下午 com.carrental.util.AppLogger info
+信息: 尝试登录: super213
+十月 27, 2025 6:37:54 下午 com.carrental.util.AppLogger info
+信息: 登录成功: super213，保持 10 秒...
+十月 27, 2025 6:38:04 下午 com.carrental.util.AppLogger info
+信息: 已登出: super213 -> true
