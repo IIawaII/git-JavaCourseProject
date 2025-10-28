@@ -199,7 +199,7 @@ public class StaffDAO {
      */
     private void markStaffAsLoggedIn(Connection conn, String name) throws SQLException {
         // 将role字段设为负数来标记登录状态
-        String sql = "UPDATE staff SET role = -ABS(role) WHERE name = ?";
+        String sql = "UPDATE staff SET role = ABS(role) WHERE name = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.executeUpdate();

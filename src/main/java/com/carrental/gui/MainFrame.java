@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 /**
  * 主界面
@@ -19,7 +20,7 @@ public class MainFrame extends JFrame {
 
     private  User currentUser;
 
-    public MainFrame(Staff staff) {
+    public MainFrame(Staff staff) throws IOException {
         this.currentStaff = staff;
         initializeComponents();
         setupLayout();
@@ -43,7 +44,7 @@ public class MainFrame extends JFrame {
     /**
      * 初始化组件
      */
-    private void initializeComponents() {
+    private void initializeComponents() throws IOException {
         tabbedPane = new JTabbedPane();
 
         // 根据权限显示不同的标签页

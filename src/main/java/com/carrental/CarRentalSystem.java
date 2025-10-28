@@ -1,5 +1,4 @@
 package com.carrental;
-
 import com.carrental.gui.LoginFrame;
 
 /**

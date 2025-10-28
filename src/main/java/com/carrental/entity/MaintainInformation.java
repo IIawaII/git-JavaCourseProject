@@ -36,7 +36,6 @@ public class MaintainInformation {
     public int getMaintainId() {
         return maintainId;
     }
-
     public void setMaintainId(int maintainId) {
         this.maintainId = maintainId;
     }
@@ -44,7 +43,6 @@ public class MaintainInformation {
     public int getCarId() {
         return carId;
     }
-
     public void setCarId(int carId) {
         this.carId = carId;
     }
@@ -52,7 +50,6 @@ public class MaintainInformation {
     public LocalDate getMaintainDate() {
         return maintainDate;
     }
-
     public void setMaintainDate(LocalDate maintainDate) {
         this.maintainDate = maintainDate;
     }
@@ -60,7 +57,6 @@ public class MaintainInformation {
     public String getMaintainDescribe() {
         return maintainDescribe;
     }
-
     public void setMaintainDescribe(String maintainDescribe) {
         this.maintainDescribe = maintainDescribe;
     }
@@ -68,7 +64,6 @@ public class MaintainInformation {
     public LocalDate getMaintainBeginDate() {
         return maintainBeginDate;
     }
-
     public void setMaintainBeginDate(LocalDate maintainBeginDate) {
         this.maintainBeginDate = maintainBeginDate;
     }
@@ -76,7 +71,6 @@ public class MaintainInformation {
     public LocalDate getMaintainFinishDate() {
         return maintainFinishDate;
     }
-
     public void setMaintainFinishDate(LocalDate maintainFinishDate) {
         this.maintainFinishDate = maintainFinishDate;
     }
@@ -84,7 +78,6 @@ public class MaintainInformation {
     public BigDecimal getMaintainCost() {
         return maintainCost;
     }
-
     public void setMaintainCost(BigDecimal maintainCost) {
         this.maintainCost = maintainCost;
     }

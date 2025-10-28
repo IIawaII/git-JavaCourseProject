@@ -32,61 +32,26 @@ public class TrafficFine {
     }
 
     // Getter和Setter方法
-    public int getFineId() {
-        return fineId;
-    }
+    public int getFineId() { return fineId; }
+    public void setFineId(int fineId) { this.fineId = fineId; }
 
-    public void setFineId(int fineId) {
-        this.fineId = fineId;
-    }
+    public int getCarId() { return carId; }
+    public void setCarId(int carId) { this.carId = carId; }
 
-    public int getCarId() {
-        return carId;
-    }
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
 
-    public void setCarId(int carId) {
-        this.carId = carId;
-    }
+    public LocalDate getViolationDate() { return violationDate; }
+    public void setViolationDate(LocalDate violationDate) { this.violationDate = violationDate; }
 
-    public int getUserId() {
-        return userId;
-    }
+    public String getOffendingLocation() { return offendingLocation; }
+    public void setOffendingLocation(String offendingLocation) { this.offendingLocation = offendingLocation; }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
+    public BigDecimal getFine() { return fine; }
+    public void setFine(BigDecimal fine) { this.fine = fine; }
 
-    public LocalDate getViolationDate() {
-        return violationDate;
-    }
-
-    public void setViolationDate(LocalDate violationDate) {
-        this.violationDate = violationDate;
-    }
-
-    public String getOffendingLocation() {
-        return offendingLocation;
-    }
-
-    public void setOffendingLocation(String offendingLocation) {
-        this.offendingLocation = offendingLocation;
-    }
-
-    public BigDecimal getFine() {
-        return fine;
-    }
-
-    public void setFine(BigDecimal fine) {
-        this.fine = fine;
-    }
-
-    public String getFineState() {
-        return fineState;
-    }
-
-    public void setFineState(String fineState) {
-        this.fineState = fineState;
-    }
+    public String getFineState() { return fineState; }
+    public void setFineState(String fineState) { this.fineState = fineState; }
 
     @Override
     public String toString() {

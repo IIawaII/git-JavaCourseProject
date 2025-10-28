@@ -34,7 +34,6 @@ public class Staff {
     public int getStaffId() {
         return staffId;
     }
-
     public void setStaffId(int staffId) {
         this.staffId = staffId;
     }
@@ -42,7 +41,6 @@ public class Staff {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -50,7 +48,6 @@ public class Staff {
     public String getPhone() {
         return phone;
     }
-
     public void setPhone(String phone) {
         this.phone = phone;
     }
@@ -58,7 +55,6 @@ public class Staff {
     public LocalDate getEntryDate() {
         return entryDate;
     }
-
     public void setEntryDate(LocalDate entryDate) {
         this.entryDate = entryDate;
     }
@@ -66,7 +62,6 @@ public class Staff {
     public String getPosition() {
         return position;
     }
-
     public void setPosition(String position) {
         this.position = position;
     }
@@ -74,7 +69,6 @@ public class Staff {
     public int getRole() {
         return role;
     }
-
     public void setRole(int role) {
         this.role = role;
     }
@@ -82,7 +76,6 @@ public class Staff {
     public String getPassword() {
         return password;
     }
-
     public void setPassword(String password) {
         this.password = password;
     }

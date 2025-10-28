@@ -13,7 +13,7 @@ public class UserRegisterDialog extends JDialog {
     private JTextField identityField;
     private JButton registerButton;
     private JButton cancelButton;
-    private UserService userService;
+    private final UserService userService;
 
     public UserRegisterDialog(JFrame parent, UserService userService) {
         super(parent, "用户注册", true);

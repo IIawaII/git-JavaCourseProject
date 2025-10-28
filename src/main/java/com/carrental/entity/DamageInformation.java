@@ -32,7 +32,6 @@ public class DamageInformation {
     public int getDamageId() {
         return damageId;
     }
-
     public void setDamageId(int damageId) {
         this.damageId = damageId;
     }
@@ -40,7 +39,6 @@ public class DamageInformation {
     public int getCarId() {
         return carId;
     }
-
     public void setCarId(int carId) {
         this.carId = carId;
     }
@@ -48,7 +46,6 @@ public class DamageInformation {
     public byte[] getPhoto() {
         return photo;
     }
-
     public void setPhoto(byte[] photo) {
         this.photo = photo;
     }
@@ -56,7 +53,6 @@ public class DamageInformation {
     public LocalDate getDamageDate() {
         return damageDate;
     }
-
     public void setDamageDate(LocalDate damageDate) {
         this.damageDate = damageDate;
     }
@@ -64,7 +60,6 @@ public class DamageInformation {
     public String getDamageDescribe() {
         return damageDescribe;
     }
-
     public void setDamageDescribe(String damageDescribe) {
         this.damageDescribe = damageDescribe;
     }
@@ -72,7 +67,6 @@ public class DamageInformation {
     public String getDamageState() {
         return damageState;
     }
-
     public void setDamageState(String damageState) {
         this.damageState = damageState;
     }

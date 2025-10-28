@@ -7,6 +7,7 @@ import com.carrental.util.DatabaseConnection;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.concurrent.*;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -118,10 +119,22 @@ public class LoginFrame extends JFrame {
     }
 
     private void setupEventHandlers() {
-        loginButton.addActionListener(e -> performLogin());
+        loginButton.addActionListener(e -> {
+            try {
+                performLogin();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         cancelButton.addActionListener(e -> System.exit(0));
         registerButton.addActionListener(e -> new UserRegisterDialog(this, userService).setVisible(true));
-        passwordField.addActionListener(e -> performLogin());
+        passwordField.addActionListener(e -> {
+            try {
+                performLogin();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
     }
     /**
      * 处理登录事件
@@ -189,7 +202,11 @@ public class LoginFrame extends JFrame {
 
                         // 打开主界面
                         dispose();
-                        new MainFrame(staff).setVisible(true);
+                        try {
+                            new MainFrame(staff).setVisible(true);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                     } else {
                         // 检查是否是重复登录或其他错误
                         try {
@@ -266,7 +283,7 @@ public class LoginFrame extends JFrame {
         }
     }
 
-    private void performLogin() {
+    private void performLogin() throws IOException {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
 

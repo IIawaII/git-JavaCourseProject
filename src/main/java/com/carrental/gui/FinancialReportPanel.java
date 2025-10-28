@@ -5,6 +5,9 @@ import com.carrental.util.DatabaseConnection;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.*;
 
 /**
@@ -20,7 +23,10 @@ public class FinancialReportPanel extends JPanel {
     private JButton refreshButton;
     private JTabbedPane reportTabbedPane;
 
-    public FinancialReportPanel() {
+    private JPanel chartPanel;
+
+
+    public FinancialReportPanel() throws IOException {
         this.dbConnection = DatabaseConnection.getInstance();
         initializeComponents();
         setupLayout();
@@ -77,6 +83,11 @@ public class FinancialReportPanel extends JPanel {
         
         // 刷新按钮
         refreshButton = new JButton("刷新数据");
+
+        // 初始化图表面板
+        chartPanel = new JPanel(new BorderLayout());  // 给 chartPanel 分配实际的容器
+        JLabel chartLabel = new JLabel("图表将在这里显示");
+        chartPanel.add(chartLabel, BorderLayout.CENTER);
     }
 
     /**
@@ -97,23 +108,33 @@ public class FinancialReportPanel extends JPanel {
         reportTabbedPane.addTab("已维修车辆", new JScrollPane(repairedCarTable));
         
         add(reportTabbedPane, BorderLayout.CENTER);
+
+        // 将图表区域添加到面板的下方
+        add(chartPanel, BorderLayout.SOUTH);
     }
 
     /**
      * 设置事件处理器
      */
     private void setupEventHandlers() {
-        refreshButton.addActionListener(e -> loadData());
+        refreshButton.addActionListener(e -> {
+            try {
+                loadData();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
     }
 
     /**
      * 加载数据
      */
-    private void loadData() {
+    private void loadData() throws IOException {
         loadProfitData();
         loadUnpaidFineData();
         loadStaffCarCountData();
         loadRepairedCarData();
+        loadChart(); // 加载图表
     }
 
     /**
@@ -228,6 +249,70 @@ public class FinancialReportPanel extends JPanel {
         } catch (SQLException e) {
             System.err.println("加载已维修车辆数据失败: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+    private void loadChart() throws IOException {
+        System.out.println("加载图表");
+        Process process = null;
+        try {
+            // 运行第一个 Python 脚本（chartplot.py）生成仪表盘图像
+            String pythonInterpreterPath = "/opt/anaconda3/bin/python";  // 确保这个路径指向你的 Anaconda 环境
+            String chartPlotScriptPath = "python/python_code/chartplot.py";  // chartplot.py 脚本的相对路径
+            ProcessBuilder pbChartPlot = new ProcessBuilder(pythonInterpreterPath, chartPlotScriptPath);
+            pbChartPlot.redirectErrorStream(true);
+            process = pbChartPlot.start();
+
+            // 等待 chartplot.py 执行完成
+            process.waitFor();
+
+            // 运行第二个 Python 脚本（staff_manage_car_plot.py）生成饼图
+            String staffManageCarPlotScriptPath = "python/python_code/staff_manage_car_plot.py";  // staff_manage_car_plot.py 脚本的相对路径
+            ProcessBuilder pbStaffManageCarPlot = new ProcessBuilder(pythonInterpreterPath, staffManageCarPlotScriptPath);
+            pbStaffManageCarPlot.redirectErrorStream(true);
+            process = pbStaffManageCarPlot.start();
+
+            // 等待 staff_manage_car_plot.py 执行完成
+            process.waitFor();
+
+            // 加载仪表盘图图像
+            ImageIcon chartIcon = new ImageIcon("python/plot/total_profit_progress.png");  // 相对路径
+            Image img = chartIcon.getImage();
+            int width = 400;
+            int height = 300;
+            Image scaledImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaledImg);
+            JLabel chartLabel = new JLabel(scaledIcon);
+
+            // 加载饼图图像
+            ImageIcon pieChartIcon = new ImageIcon("python/plot/staff_manage_car_plot.png");  // 相对路径
+            Image pieImg = pieChartIcon.getImage();
+            Image scaledPieImg = pieImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            ImageIcon scaledPieIcon = new ImageIcon(scaledPieImg);
+            JLabel pieChartLabel = new JLabel(scaledPieIcon);
+
+            // 创建一个 JPanel 来容纳两个图表
+            JPanel imagePanel = new JPanel();
+            imagePanel.setLayout(new FlowLayout());  // 使用 FlowLayout 来并排显示
+            imagePanel.add(chartLabel);
+            imagePanel.add(pieChartLabel);
+
+            // 清除旧的内容并添加新的图表容器
+            chartPanel.removeAll();
+            chartPanel.add(imagePanel, BorderLayout.CENTER);
+
+            // 更新 UI
+            chartPanel.revalidate();
+            chartPanel.repaint();
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("执行 Python 脚本失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            System.out.println(line);
         }
     }
 }

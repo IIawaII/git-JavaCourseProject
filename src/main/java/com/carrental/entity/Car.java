@@ -42,7 +42,6 @@ public class Car {
     public int getCarId() {
         return carId;
     }
-
     public void setCarId(int carId) {
         this.carId = carId;
     }
@@ -50,7 +49,6 @@ public class Car {
     public String getLicensePlateNumber() {
         return licensePlateNumber;
     }
-
     public void setLicensePlateNumber(String licensePlateNumber) {
         this.licensePlateNumber = licensePlateNumber;
     }
@@ -58,7 +56,6 @@ public class Car {
     public String getModel() {
         return model;
     }
-
     public void setModel(String model) {
         this.model = model;
     }
@@ -66,7 +63,6 @@ public class Car {
     public String getColor() {
         return color;
     }
-
     public void setColor(String color) {
         this.color = color;
     }
@@ -74,7 +70,6 @@ public class Car {
     public String getStatus() {
         return status;
     }
-
     public void setStatus(String status) {
         this.status = status;
     }
@@ -82,7 +77,6 @@ public class Car {
     public String getBrand() {
         return brand;
     }
-
     public void setBrand(String brand) {
         this.brand = brand;
     }
@@ -90,7 +84,6 @@ public class Car {
     public LocalDate getPurchaseDate() {
         return purchaseDate;
     }
-
     public void setPurchaseDate(LocalDate purchaseDate) {
         this.purchaseDate = purchaseDate;
     }
@@ -98,7 +91,6 @@ public class Car {
     public byte[] getPhoto() {
         return photo;
     }
-
     public void setPhoto(byte[] photo) {
         this.photo = photo;
     }
@@ -106,7 +98,6 @@ public class Car {
     public BigDecimal getRent() {
         return rent;
     }
-
     public void setRent(BigDecimal rent) {
         this.rent = rent;
     }
@@ -114,7 +105,6 @@ public class Car {
     public String getDeposit() {
         return deposit;
     }
-
     public void setDeposit(String deposit) {
         this.deposit = deposit;
     }

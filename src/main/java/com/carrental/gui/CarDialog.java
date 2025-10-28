@@ -127,7 +127,7 @@ public class CarDialog extends JDialog {
 
     private void saveCar() {
         // 输入验证
-        if (carIdField.getText().trim().isEmpty()) {showError("请输入车辆ID"); return;}
+        if (carIdField.getText().trim().isEmpty()) { showError("请输入车辆ID"); return; }
         if (licensePlateField.getText().trim().isEmpty()) { showError("请输入车牌号"); return; }
         if (brandField.getText().trim().isEmpty()) { showError("请输入品牌"); return; }
         if (modelField.getText().trim().isEmpty()) { showError("请输入型号"); return; }
@@ -144,8 +144,16 @@ public class CarDialog extends JDialog {
             carToSave.setModel(modelField.getText().trim());
             carToSave.setColor(colorField.getText().trim());
             carToSave.setStatus((String) statusComboBox.getSelectedItem());
-            carToSave.setRent(new BigDecimal(rentField.getText().trim()));
-            carToSave.setDeposit(depositField.getText().trim());
+
+            /*
+            在增加和修改车辆价格时 GUI会自动在千位数上添加逗号
+            因此删除 rentField 和 depositField 中的逗号
+             */
+            String rentText = rentField.getText().replace(",", "").trim();
+            String depositText = depositField.getText().replace(",", "").trim();
+            carToSave.setRent(new BigDecimal(rentText));
+            carToSave.setDeposit(depositText);
+
             carToSave.setPurchaseDate(purchaseDatePicker.getSelectedDate());
 
             boolean success = (car == null) ? carService.addCar(carToSave) : carService.updateCar(carToSave);

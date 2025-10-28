@@ -13,7 +13,7 @@ import java.util.List;
  * 负责车辆相关的数据库操作
  */
 public class CarDAO {
-    private DatabaseConnection dbConnection;
+    private final DatabaseConnection dbConnection;
 
     public CarDAO() {
         this.dbConnection = DatabaseConnection.getInstance();

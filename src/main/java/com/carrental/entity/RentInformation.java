@@ -38,7 +38,6 @@ public class RentInformation {
     public int getRentId() {
         return rentId;
     }
-
     public void setRentId(int rentId) {
         this.rentId = rentId;
     }
@@ -46,7 +45,6 @@ public class RentInformation {
     public int getCarId() {
         return carId;
     }
-
     public void setCarId(int carId) {
         this.carId = carId;
     }
@@ -54,7 +52,6 @@ public class RentInformation {
     public int getStaffId() {
         return staffId;
     }
-
     public void setStaffId(int staffId) {
         this.staffId = staffId;
     }
@@ -62,7 +59,6 @@ public class RentInformation {
     public int getUserId() {
         return userId;
     }
-
     public void setUserId(int userId) {
         this.userId = userId;
     }
@@ -70,7 +66,6 @@ public class RentInformation {
     public LocalDate getRentDate() {
         return rentDate;
     }
-
     public void setRentDate(LocalDate rentDate) {
         this.rentDate = rentDate;
     }
@@ -78,7 +73,6 @@ public class RentInformation {
     public LocalDate getReturnDate() {
         return returnDate;
     }
-
     public void setReturnDate(LocalDate returnDate) {
         this.returnDate = returnDate;
     }
@@ -86,7 +80,6 @@ public class RentInformation {
     public BigDecimal getPayTheAmount() {
         return payTheAmount;
     }
-
     public void setPayTheAmount(BigDecimal payTheAmount) {
         this.payTheAmount = payTheAmount;
     }
@@ -94,7 +87,6 @@ public class RentInformation {
     public BigDecimal getReturnAmount() {
         return returnAmount;
     }
-
     public void setReturnAmount(BigDecimal returnAmount) {
         this.returnAmount = returnAmount;
     }
