@@ -24,6 +24,7 @@ public class FinancialReportPanel extends JPanel {
     private JTabbedPane reportTabbedPane;
 
     private JPanel chartPanel;
+    private JScrollPane chartScrollPane;
 
 
     public FinancialReportPanel() throws IOException {
@@ -40,7 +41,7 @@ public class FinancialReportPanel extends JPanel {
     private void initializeComponents() {
         // 创建标签页
         reportTabbedPane = new JTabbedPane();
-        
+
         // 利润分析表
         String[] profitColumns = {"车辆编号", "用户支付金额", "归还用户金额", "用户造成的损坏", "利润"};
         DefaultTableModel profitModel = new DefaultTableModel(profitColumns, 0) {
@@ -50,7 +51,7 @@ public class FinancialReportPanel extends JPanel {
             }
         };
         profitTable = new JTable(profitModel);
-        
+
         // 未交罚款表
         String[] unpaidFineColumns = {"名字", "罚款金额"};
         DefaultTableModel unpaidFineModel = new DefaultTableModel(unpaidFineColumns, 0) {
@@ -60,7 +61,7 @@ public class FinancialReportPanel extends JPanel {
             }
         };
         unpaidFineTable = new JTable(unpaidFineModel);
-        
+
         // 员工管理车辆数量表
         String[] staffCarCountColumns = {"管理员工", "管理车辆数量"};
         DefaultTableModel staffCarCountModel = new DefaultTableModel(staffCarCountColumns, 0) {
@@ -70,7 +71,7 @@ public class FinancialReportPanel extends JPanel {
             }
         };
         staffCarCountTable = new JTable(staffCarCountModel);
-        
+
         // 已维修车辆表
         String[] repairedCarColumns = {"车牌号", "型号", "颜色", "状态", "日租金", "押金"};
         DefaultTableModel repairedCarModel = new DefaultTableModel(repairedCarColumns, 0) {
@@ -80,7 +81,7 @@ public class FinancialReportPanel extends JPanel {
             }
         };
         repairedCarTable = new JTable(repairedCarModel);
-        
+
         // 刷新按钮
         refreshButton = new JButton("刷新数据");
 
@@ -88,6 +89,10 @@ public class FinancialReportPanel extends JPanel {
         chartPanel = new JPanel(new BorderLayout());  // 给 chartPanel 分配实际的容器
         JLabel chartLabel = new JLabel("图表将在这里显示");
         chartPanel.add(chartLabel, BorderLayout.CENTER);
+
+        // 创建 JScrollPane 来支持滚动
+        chartScrollPane = new JScrollPane(chartPanel);
+        chartScrollPane.setPreferredSize(new Dimension(800, 300));  // 图表显示框分配的空间大小
     }
 
     /**
@@ -95,22 +100,22 @@ public class FinancialReportPanel extends JPanel {
      */
     private void setupLayout() {
         setLayout(new BorderLayout());
-        
+
         // 顶部工具栏
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(refreshButton);
         add(topPanel, BorderLayout.NORTH);
-        
+
         // 中间标签页
         reportTabbedPane.addTab("利润分析", new JScrollPane(profitTable));
         reportTabbedPane.addTab("未交罚款", new JScrollPane(unpaidFineTable));
         reportTabbedPane.addTab("员工管理统计", new JScrollPane(staffCarCountTable));
         reportTabbedPane.addTab("已维修车辆", new JScrollPane(repairedCarTable));
-        
+
         add(reportTabbedPane, BorderLayout.CENTER);
 
-        // 将图表区域添加到面板的下方
-        add(chartPanel, BorderLayout.SOUTH);
+        // 将滚动面板添加到面板的下方
+        add(chartScrollPane, BorderLayout.SOUTH);
     }
 
     /**
@@ -143,9 +148,9 @@ public class FinancialReportPanel extends JPanel {
     private void loadProfitData() {
         DefaultTableModel model = (DefaultTableModel) profitTable.getModel();
         model.setRowCount(0);
-        
+
         String sql = "SELECT * FROM profit_view";
-        
+
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -255,9 +260,11 @@ public class FinancialReportPanel extends JPanel {
         System.out.println("加载图表");
         Process process = null;
         try {
-            // 运行第一个 Python 脚本（chartplot.py）生成仪表盘图像
-            String pythonInterpreterPath = "/opt/anaconda3/bin/python";  // 确保这个路径指向你的 Anaconda 环境
-            String chartPlotScriptPath = "python/python_code/chartplot.py";  // chartplot.py 脚本的相对路径
+            // 设置 Python 解释器路径
+            String pythonInterpreterPath = "/opt/anaconda3/bin/python";
+
+            // 运行chartplot.py生成仪表盘图像
+            String chartPlotScriptPath = "python/python_code/chartplot.py";
             ProcessBuilder pbChartPlot = new ProcessBuilder(pythonInterpreterPath, chartPlotScriptPath);
             pbChartPlot.redirectErrorStream(true);
             process = pbChartPlot.start();
@@ -265,13 +272,22 @@ public class FinancialReportPanel extends JPanel {
             // 等待 chartplot.py 执行完成
             process.waitFor();
 
-            // 运行第二个 Python 脚本（staff_manage_car_plot.py）生成饼图
-            String staffManageCarPlotScriptPath = "python/python_code/staff_manage_car_plot.py";  // staff_manage_car_plot.py 脚本的相对路径
+            // 运行staff_manage_car_plot.py生成饼图
+            String staffManageCarPlotScriptPath = "python/python_code/staff_manage_car_plot.py";
             ProcessBuilder pbStaffManageCarPlot = new ProcessBuilder(pythonInterpreterPath, staffManageCarPlotScriptPath);
             pbStaffManageCarPlot.redirectErrorStream(true);
             process = pbStaffManageCarPlot.start();
 
             // 等待 staff_manage_car_plot.py 执行完成
+            process.waitFor();
+
+            // 运行recent_day_profit_plot生成最近30天利润变化图
+            String recentDayProfitPlotScriptPath = "python/python_code/recent_day_profit_plot.py";
+            ProcessBuilder pbRecentDayProfitPlot = new ProcessBuilder(pythonInterpreterPath, recentDayProfitPlotScriptPath);
+            pbRecentDayProfitPlot.redirectErrorStream(true);
+            process = pbRecentDayProfitPlot.start();
+
+            // 等待 recent_day_profit_plot.py 执行完成
             process.waitFor();
 
             // 加载仪表盘图图像
@@ -290,11 +306,34 @@ public class FinancialReportPanel extends JPanel {
             ImageIcon scaledPieIcon = new ImageIcon(scaledPieImg);
             JLabel pieChartLabel = new JLabel(scaledPieIcon);
 
-            // 创建一个 JPanel 来容纳两个图表
-            JPanel imagePanel = new JPanel();
-            imagePanel.setLayout(new FlowLayout());  // 使用 FlowLayout 来并排显示
-            imagePanel.add(chartLabel);
-            imagePanel.add(pieChartLabel);
+            // 加载最近30天利润变化图
+            ImageIcon recentDayProfitChartIcon = new ImageIcon("python/plot/recent_day_profit_plot.png");  // 相对路径
+            Image recentDayProfitImg = recentDayProfitChartIcon.getImage();
+            Image scaledRecentDayProfitImg = recentDayProfitImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            ImageIcon scaledRecentDayProfitIcon = new ImageIcon(scaledRecentDayProfitImg);
+            JLabel recentDayProfitChartLabel = new JLabel(scaledRecentDayProfitIcon);
+
+            // 创建一个 JPanel 来容纳图表
+            JPanel imagePanel = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(10, 10, 10, 10);  // 设置间隔
+
+            // 第一张图：放在第1行第1列
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            imagePanel.add(chartLabel, gbc);
+
+            // 第二张图：放在第1行第2列
+            gbc.gridx = 1;
+            imagePanel.add(recentDayProfitChartLabel, gbc);
+
+            // 第三张图：放在第2行第1列（跨列显示）
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.gridwidth = 2;  // 让第三个组件跨越两列
+            imagePanel.add(pieChartLabel, gbc);
+
+            imagePanel.setPreferredSize(new Dimension(800, 800));  // 每个图表分配的空间
 
             // 清除旧的内容并添加新的图表容器
             chartPanel.removeAll();
@@ -308,7 +347,6 @@ public class FinancialReportPanel extends JPanel {
             System.err.println("执行 Python 脚本失败: " + e.getMessage());
             e.printStackTrace();
         }
-
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
         while ((line = reader.readLine()) != null) {
