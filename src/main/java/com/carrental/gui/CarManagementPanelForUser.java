@@ -4,12 +4,14 @@ import com.carrental.entity.Car;
 import com.carrental.entity.Staff;
 import com.carrental.entity.User;
 import com.carrental.service.CarService;
+import com.carrental.service.RentService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -25,6 +27,8 @@ public class CarManagementPanelForUser extends JPanel {
     private JComboBox<String> statusComboBox;
     private JComboBox<String> brandComboBox;
     private String userPermit;
+    private User currentUser;
+    private RentService rentService;
 
     public CarManagementPanelForUser() {
         this.carService = new CarService();
@@ -141,6 +145,7 @@ public class CarManagementPanelForUser extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // 查看详情按钮
         JButton viewButton = new JButton("查看详情");
         viewButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
         viewButton.addActionListener(new ActionListener() {
@@ -150,6 +155,17 @@ public class CarManagementPanelForUser extends JPanel {
             }
         });
         buttonPanel.add(viewButton);
+
+        // 租车按钮
+        JButton rentButton = new JButton("租车");
+        rentButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        rentButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                rentCar(); // 调用租车逻辑
+            }
+        });
+        buttonPanel.add(rentButton);
 
         return buttonPanel;
     }
@@ -275,5 +291,63 @@ public class CarManagementPanelForUser extends JPanel {
 
     private Component[] getComponentsInPanel() {
         return ((JPanel) this.getComponent(2)).getComponents(); // 获取按钮面板的组件
+    }
+    /**
+     * 用户租车操作
+     */
+    private void rentCar() {
+        int selectedRow = carTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "请先选择要租赁的车辆！", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int carId = (Integer) tableModel.getValueAt(selectedRow, 0);
+        String status = (String) tableModel.getValueAt(selectedRow, 5);
+
+        if (!"空闲".equals(status)) {
+            JOptionPane.showMessageDialog(this, "该车辆当前不可租赁！", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 输入租赁与归还日期
+        DatePicker startDatePicker = new DatePicker();
+        DatePicker endDatePicker = new DatePicker();
+
+        JPanel datePanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        datePanel.add(new JLabel("租车日期"));
+        datePanel.add(startDatePicker);
+        datePanel.add(new JLabel("归还日期"));
+        datePanel.add(endDatePicker);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                datePanel,
+                "请输入租赁日期",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                LocalDate rentDate = startDatePicker.getSelectedDate();
+                LocalDate returnDate = endDatePicker.getSelectedDate();
+
+                // 获取用户ID和员工ID
+                int userId = currentUser.getUserId();
+                int staffId = 1; // 可根据业务逻辑动态分配或固定
+
+                boolean success = rentService.rentCar(carId, userId, staffId, rentDate, returnDate);
+
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "租车成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
+                    loadCarData(); // 刷新车辆列表
+                } else {
+                    JOptionPane.showMessageDialog(this, "租车失败，请检查输入或车辆状态。", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "日期格式错误，请使用 yyyy-MM-dd 格式", "错误", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

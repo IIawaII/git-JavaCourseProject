@@ -10,7 +10,7 @@ import java.sql.SQLException;
  * 使用单例模式管理数据库连接
  */
 public class DatabaseConnection {
-    private static final String URL = "jdbc:mysql://10.245.203.137:3306/car_rental_system?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://10.245.242.29:3306/car_rental_system?useSSL=false&serverTimezone=UTC";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "12345678";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
