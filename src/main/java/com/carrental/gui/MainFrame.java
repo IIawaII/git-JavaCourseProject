@@ -37,7 +37,7 @@ public class MainFrame extends JFrame {
     }
     private void initializeComponentsForUser() {
         tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("车辆信息", new CarManagementPanelForUser()); // 只读或者可租借
+        tabbedPane.addTab("车辆信息", new CarManagementPanelForUser(currentUser)); // 只读或者可租借
     }
 
 

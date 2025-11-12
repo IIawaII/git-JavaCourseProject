@@ -27,12 +27,14 @@ public class CarManagementPanelForUser extends JPanel {
     private JComboBox<String> statusComboBox;
     private JComboBox<String> brandComboBox;
     private String userPermit;
-    private User currentUser;
-    private RentService rentService;
+    private final RentService rentService;
+    private final User currentUser;
 
-    public CarManagementPanelForUser() {
+    public CarManagementPanelForUser(User currentUser) {
         this.carService = new CarService();
         this.userPermit = userPermit;
+        this.currentUser = currentUser;
+        this.rentService = new RentService();
         initializeComponents();
         setupLayout();
         setupEventHandlers();
@@ -296,6 +298,7 @@ public class CarManagementPanelForUser extends JPanel {
      * 用户租车操作
      */
     private void rentCar() {
+
         int selectedRow = carTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "请先选择要租赁的车辆！", "提示", JOptionPane.WARNING_MESSAGE);
@@ -310,11 +313,13 @@ public class CarManagementPanelForUser extends JPanel {
             return;
         }
 
-        // 输入租赁与归还日期
+        JTextField staffIdField = new JTextField();
         DatePicker startDatePicker = new DatePicker();
         DatePicker endDatePicker = new DatePicker();
 
-        JPanel datePanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        JPanel datePanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        datePanel.add(new JLabel("员工ID"));
+        datePanel.add(staffIdField);
         datePanel.add(new JLabel("租车日期"));
         datePanel.add(startDatePicker);
         datePanel.add(new JLabel("归还日期"));
@@ -323,31 +328,56 @@ public class CarManagementPanelForUser extends JPanel {
         int result = JOptionPane.showConfirmDialog(
                 this,
                 datePanel,
-                "请输入租赁日期",
+                "请输入租赁信息",
                 JOptionPane.OK_CANCEL_OPTION
         );
 
-        if (result == JOptionPane.OK_OPTION) {
-            try {
-                LocalDate rentDate = startDatePicker.getSelectedDate();
-                LocalDate returnDate = endDatePicker.getSelectedDate();
+        if (result != JOptionPane.OK_OPTION) return;
 
-                // 获取用户ID和员工ID
-                int userId = currentUser.getUserId();
-                int staffId = 1; // 可根据业务逻辑动态分配或固定
+        // 3. 输入验证
+        if (staffIdField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "请输入员工ID！", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int staffId;
+        try {
+            staffId = Integer.parseInt(staffIdField.getText().trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "员工ID必须是数字！", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-                boolean success = rentService.rentCar(carId, userId, staffId, rentDate, returnDate);
+        if (!startDatePicker.isValidDate()) {
+            JOptionPane.showMessageDialog(this, "请选择有效的租车日期！", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (!endDatePicker.isValidDate()) {
+            JOptionPane.showMessageDialog(this, "请选择有效的归还日期！", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-                if (success) {
-                    JOptionPane.showMessageDialog(this, "租车成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
-                    loadCarData(); // 刷新车辆列表
-                } else {
-                    JOptionPane.showMessageDialog(this, "租车失败，请检查输入或车辆状态。", "错误", JOptionPane.ERROR_MESSAGE);
-                }
+        LocalDate rentDate = startDatePicker.getSelectedDate();
+        LocalDate returnDate = endDatePicker.getSelectedDate();
 
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "日期格式错误，请使用 yyyy-MM-dd 格式", "错误", JOptionPane.ERROR_MESSAGE);
+        if (returnDate.isBefore(rentDate)) {
+            JOptionPane.showMessageDialog(this, "归还日期不能早于租车日期！", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            int userId = currentUser.getUserId();
+
+            boolean success = rentService.rentCar(carId, userId, staffId, rentDate, returnDate);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "租车成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
+                loadCarData(); // 刷新车辆列表
+            } else {
+                JOptionPane.showMessageDialog(this, "租车失败，请检查输入或车辆状态。", "错误", JOptionPane.ERROR_MESSAGE);
             }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "租赁失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 }

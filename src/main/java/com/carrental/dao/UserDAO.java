@@ -249,17 +249,14 @@ public class UserDAO {
     }
 
     public User getUserByPhone(String phone) {
-                /*
-        这个方法用于用户登陆时判断用户手机号和身份证是否匹配
-        要name是因为登陆后在右上角会显示用户名字
-         */
-        String sql = "SELECT name, identity_id, phone FROM user WHERE phone = ?";
+        String sql = "SELECT user_id, name, identity_id, phone FROM user WHERE phone = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, phone);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 User user = new User();
+                user.setUserId(rs.getInt("user_id"));
                 user.setName(rs.getString("name"));
                 user.setIdentityId(rs.getString("identity_id"));
                 user.setPhone(rs.getString("phone"));
